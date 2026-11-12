@@ -1,0 +1,290 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  PROVIDER
+  VISITOR
+}
+
+enum ProviderStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+}
+
+enum District {
+  BENI_SUEF_CITY
+  EL_WASTA
+  NASSER
+  IHNASYA
+  BABA
+  EL_FASHN
+  SAMASTA
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  INSTAPAY
+  VODAFONE_CASH
+  OTHER
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ─── Better Auth Models ──────────────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  emailVerified     Boolean   @default(false)
+  phone             String?   @unique
+  phoneVerifiedAt   DateTime?
+  image             String?
+  role              Role      @default(VISITOR)
+  mustChangePassword Boolean  @default(false)
+  isActive          Boolean   @default(true)
+  banned            Boolean?  @default(false)
+  banReason         String?
+  banExpires        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Better Auth relations
+  sessions          Session[]
+  accounts          Account[]
+
+  // App relations
+  provider             Provider?
+  reviews              Review[]
+  favorites            Favorite[]
+  createdSubscriptions Subscription[] @relation("SubscriptionCreatedBy")
+}
+
+model Session {
+  id             String    @id @default(cuid())
+  expiresAt      DateTime
+  token          String    @unique
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  impersonatedBy String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+// ─── App Models ──────────────────────────────────────────────────────────────
+
+model Category {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  nameAr    String
+  parentId  String?
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  // Self-relation for future grouping
+  parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryParent")
+
+  // Relations
+  providers ProviderCategory[]
+}
+
+model Provider {
+  id            String         @id @default(cuid())
+  userId        String         @unique
+  slug          String         @unique
+  name          String
+  bio           String?        @db.Text
+  district      District
+  address       String?
+  phone         String?
+  whatsapp      String?
+  instagramUrl  String?
+  facebookUrl   String?
+  logoUrl       String?
+  logoPublicId  String?
+  coverUrl      String?
+  coverPublicId String?
+  status        ProviderStatus @default(PENDING)
+  maxOffers     Int?
+  maxImages     Int?
+  maxVideos     Int?
+  averageRating Float          @default(0)
+  reviewCount   Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  user          User               @relation(fields: [userId], references: [id])
+  categories    ProviderCategory[]
+  offers        Offer[]
+  media         Media[]
+  blockedDates  BlockedDate[]
+  subscriptions Subscription[]
+  reviews       Review[]
+  favorites     Favorite[]
+
+  @@index([district])
+  @@index([status])
+}
+
+model ProviderCategory {
+  providerId String
+  categoryId String
+  isPrimary  Boolean @default(false)
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([providerId, categoryId])
+}
+
+model Offer {
+  id          String   @id @default(cuid())
+  providerId  String
+  title       String
+  description String?  @db.Text
+  price       Int? // whole EGP; null = "contact for price"
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+}
+
+model Media {
+  id                 String    @id @default(cuid())
+  providerId         String
+  type               MediaType
+  url                String
+  cloudinaryPublicId String?
+  caption            String?
+  sortOrder          Int       @default(0)
+  createdAt          DateTime  @default(now())
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+}
+
+model BlockedDate {
+  id         String   @id @default(cuid())
+  providerId String
+  date       DateTime @db.Date
+  note       String?
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, date])
+  @@index([date])
+}
+
+model Subscription {
+  id            String             @id @default(cuid())
+  providerId    String
+  status        SubscriptionStatus @default(ACTIVE)
+  startsAt      DateTime
+  endsAt        DateTime
+  planName      String?
+  amountPaid    Int? // EGP
+  paymentMethod PaymentMethod?
+  paymentNote   String?
+  createdById   String
+  createdAt     DateTime           @default(now())
+
+  provider  Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  createdBy User     @relation("SubscriptionCreatedBy", fields: [createdById], references: [id])
+
+  @@index([providerId])
+  @@index([endsAt])
+}
+
+model Review {
+  id              String       @id @default(cuid())
+  providerId      String
+  userId          String
+  rating          Int // 1-5, validated in app code with zod
+  comment         String?      @db.Text
+  status          ReviewStatus @default(PENDING)
+  providerReply   String?      @db.Text
+  providerRepliedAt DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([providerId, userId])
+  @@index([providerId, status])
+}
+
+model Favorite {
+  userId     String
+  providerId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@id([userId, providerId])
+}
