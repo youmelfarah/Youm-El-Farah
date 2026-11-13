@@ -3,6 +3,8 @@ import { v2 as cloudinary } from "cloudinary";
 export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 export const ALLOWED_IMAGE_FORMATS = ["jpg", "jpeg", "png", "webp"] as const;
 
+const isDev = process.env.NODE_ENV === "development";
+
 interface CloudinaryEnvConfig {
   cloudName: string;
   apiKey: string;
@@ -49,6 +51,11 @@ export interface SignedImageUploadPayload {
 /**
  * Generates a short-lived signed upload payload scoped to the provider's folder.
  * The API secret is never returned to the client.
+ *
+ * Only `timestamp` and `folder` are signed and sent to Cloudinary.
+ * `allowed_formats` is enforced server-side during verification, not in the
+ * signature — Cloudinary rejects the upload with "Invalid Signature" when
+ * `allowed_formats` is part of the signature but sent as a simple form field.
  */
 export function createSignedImageUploadPayload(
   providerId: string
@@ -58,11 +65,13 @@ export function createSignedImageUploadPayload(
   const folder = getProviderCloudinaryFolder(providerId);
   const allowedFormats = ALLOWED_IMAGE_FORMATS.join(",");
 
+  // Sign only the parameters that the client will send to Cloudinary's
+  // upload endpoint.  `allowed_formats` is NOT sent by the client so it
+  // must NOT appear in the signature.
   const signature = cld.utils.api_sign_request(
     {
       timestamp,
       folder,
-      allowed_formats: allowedFormats,
     },
     env.apiSecret
   );
@@ -104,8 +113,16 @@ export async function verifyUploadedProviderImage(
     resource = (await cld.api.resource(publicId, {
       resource_type: "image",
     })) as CloudinaryResourceResponse;
-  } catch {
-    throw new Error("تعذر التحقق من الصورة المرفوعة على Cloudinary");
+  } catch (err: unknown) {
+    const detail = err instanceof Error ? err.message : String(err);
+    if (isDev) {
+      console.error("[Cloudinary verify error]", detail);
+    }
+    throw new Error(
+      isDev
+        ? `تعذر التحقق من الصورة المرفوعة على Cloudinary\n[dev] ${detail}`
+        : "تعذر التحقق من الصورة المرفوعة على Cloudinary"
+    );
   }
 
   const actualPublicId = resource.public_id ?? "";

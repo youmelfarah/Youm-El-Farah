@@ -13,6 +13,8 @@ const ALLOWED_MIME_TYPES = new Set([
 
 const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
 
+const isDev = process.env.NODE_ENV === "development";
+
 export function validateImageFileClient(file: File): string | null {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   const mimeOk = file.type ? ALLOWED_MIME_TYPES.has(file.type.toLowerCase()) : false;
@@ -49,7 +51,6 @@ export function uploadFileDirectToCloudinary(
     formData.append("timestamp", String(signed.timestamp));
     formData.append("signature", signed.signature);
     formData.append("folder", signed.folder);
-    formData.append("allowed_formats", signed.allowedFormats);
 
     const xhr = new XMLHttpRequest();
     xhr.open(
@@ -76,15 +77,25 @@ export function uploadFileDirectToCloudinary(
           return;
         }
         const rawMsg = json.error?.message ?? "";
+
+        if (isDev) {
+          console.error("[Cloudinary upload error]", rawMsg, "status:", xhr.status);
+        }
+
         if (rawMsg.toLowerCase().includes("format")) {
-          reject(new Error("صيغة الصورة غير مدعومة. يُسمح فقط بـ JPG و PNG و WebP."));
+          const msg = "صيغة الصورة غير مدعومة. يُسمح فقط بـ JPG و PNG و WebP.";
+          reject(new Error(isDev && rawMsg ? `${msg}\n[dev] ${rawMsg}` : msg));
           return;
         }
         if (rawMsg.toLowerCase().includes("file size")) {
-          reject(new Error("حجم الصورة يتجاوز الحد الأقصى المسموح به (5 ميجابايت)."));
+          const msg = "حجم الصورة يتجاوز الحد الأقصى المسموح به (5 ميجابايت).";
+          reject(new Error(isDev && rawMsg ? `${msg}\n[dev] ${rawMsg}` : msg));
           return;
         }
-        reject(new Error("فشل رفع الصورة إلى Cloudinary. حاول مرة أخرى."));
+        const genericMsg = "فشل رفع الصورة إلى Cloudinary. حاول مرة أخرى.";
+        reject(
+          new Error(isDev && rawMsg ? `${genericMsg}\n[dev] ${rawMsg}` : genericMsg)
+        );
       } catch {
         reject(new Error("استجابة غير متوقعة أثناء رفع الصورة."));
       }
