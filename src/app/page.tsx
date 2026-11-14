@@ -28,24 +28,11 @@ export default function Home() {
                     <ArrowLeft className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="secondary" size="lg">
-                  <Link href="/styleguide">دليل نظام التصميم (Style Guide)</Link>
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 border-t border-border pt-6 mt-4">
-                <div>
-                  <span className="font-latin text-2xl font-bold text-text">100%</span>
-                  <p className="text-xs text-text-muted mt-0.5">مقدمو خدمات موثقون</p>
-                </div>
-                <div>
-                  <span className="font-latin text-2xl font-bold text-text">0-9</span>
-                  <p className="text-xs text-text-muted mt-0.5">أرقام وتواريخ غربية</p>
-                </div>
-                <div>
-                  <span className="font-latin text-2xl font-bold text-text">4.9/5</span>
-                  <p className="text-xs text-text-muted mt-0.5">تقييم العرائس</p>
-                </div>
+                {process.env.NODE_ENV !== "production" && (
+                  <Button asChild variant="secondary" size="lg">
+                    <Link href="/styleguide">دليل نظام التصميم (Style Guide)</Link>
+                  </Button>
+                )}
               </div>
             </div>
 

@@ -65,7 +65,7 @@ export function PublicHeader({ variant = "solid" }: PublicHeaderProps) {
             asChild
             variant="ghost"
             size="sm"
-            className="hidden sm:inline-flex text-xs"
+            className="hidden sm:inline-flex text-xs min-h-[44px]"
           >
             <Link href="/login">تسجيل الدخول</Link>
           </Button>
@@ -74,7 +74,7 @@ export function PublicHeader({ variant = "solid" }: PublicHeaderProps) {
             asChild
             variant="primary"
             size="sm"
-            className="hidden sm:inline-flex text-xs"
+            className="hidden sm:inline-flex text-xs min-h-[44px]"
           >
             <Link href="/login">انضم كمقدم خدمة</Link>
           </Button>
@@ -84,8 +84,8 @@ export function PublicHeader({ variant = "solid" }: PublicHeaderProps) {
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon-sm"
-                className="md:hidden"
+                size="icon"
+                className="md:hidden h-11 w-11 min-h-[44px] min-w-[44px]"
                 aria-label="فتح القائمة"
               >
                 <List className="h-5 w-5" weight="light" />
@@ -98,26 +98,26 @@ export function PublicHeader({ variant = "solid" }: PublicHeaderProps) {
                 </SheetTitle>
               </SheetHeader>
 
-              <nav className="flex flex-col gap-4 text-sm mt-4">
+              <nav className="flex flex-col gap-1 text-sm mt-4">
                 {navLinks.map((link) => (
                   <Link
                     key={link.label}
                     href={link.href}
                     onClick={() => setIsOpen(false)}
-                    className="py-2 text-text border-b border-border/50 hover:text-accent-text transition-colors"
+                    className="flex min-h-[44px] items-center text-text border-b border-border/50 hover:text-accent-text transition-colors"
                   >
                     {link.label}
                   </Link>
                 ))}
               </nav>
 
-              <div className="flex flex-col gap-2.5 mt-auto pt-6 border-t border-border">
-                <Button asChild variant="primary" className="w-full">
+              <div className="flex flex-col gap-3 mt-auto pt-6 border-t border-border">
+                <Button asChild variant="primary" className="w-full min-h-[44px]">
                   <Link href="/login" onClick={() => setIsOpen(false)}>
                     انضم كمقدم خدمة
                   </Link>
                 </Button>
-                <Button asChild variant="secondary" className="w-full">
+                <Button asChild variant="secondary" className="w-full min-h-[44px]">
                   <Link href="/login" onClick={() => setIsOpen(false)}>
                     تسجيل الدخول
                   </Link>

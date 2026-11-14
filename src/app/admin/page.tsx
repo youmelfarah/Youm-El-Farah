@@ -13,6 +13,7 @@ import {
 import { formatArabicDateString } from "@/lib/calendar-dates";
 import { DISTRICT_LABELS } from "@/lib/districts";
 import { getSubscriptionState } from "@/lib/subscription";
+import { formatMoney } from "@/lib/format-money";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -196,7 +197,7 @@ export default async function AdminDashboardOverviewPage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <Card className="p-4">
           <p className="text-xs text-text-muted">إجمالي المقدمين</p>
-          <p className="mt-1 font-latin text-2xl font-semibold text-text">{totalProviders}</p>
+          <p className="mt-1 font-display text-2xl font-semibold text-text">{totalProviders}</p>
           <Link
             href="/admin/providers"
             className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
@@ -207,7 +208,7 @@ export default async function AdminDashboardOverviewPage() {
 
         <Card className="p-4">
           <p className="text-xs text-text-muted">قيد المراجعة</p>
-          <p className="mt-1 font-latin text-2xl font-semibold text-warning">
+          <p className="mt-1 font-display text-2xl font-semibold text-warning">
             {pendingProvidersCount}
           </p>
           <Link
@@ -220,7 +221,7 @@ export default async function AdminDashboardOverviewPage() {
 
         <Card className="p-4">
           <p className="text-xs text-text-muted">اشتراكات فعّالة</p>
-          <p className="mt-1 font-latin text-2xl font-semibold text-success">{activeCount}</p>
+          <p className="mt-1 font-display text-2xl font-semibold text-success">{activeCount}</p>
           <Link
             href="/admin/subscriptions?state=ACTIVE"
             className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
@@ -231,7 +232,7 @@ export default async function AdminDashboardOverviewPage() {
 
         <Card className="p-4">
           <p className="text-xs text-text-muted">تنتهي خلال 30 يوماً</p>
-          <p className="mt-1 font-latin text-2xl font-semibold text-warning">{expiringCount}</p>
+          <p className="mt-1 font-display text-2xl font-semibold text-warning">{expiringCount}</p>
           <Link
             href="/admin/subscriptions?state=EXPIRING"
             className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
@@ -242,7 +243,7 @@ export default async function AdminDashboardOverviewPage() {
 
         <Card className="p-4">
           <p className="text-xs text-text-muted">اشتراكات منتهية</p>
-          <p className="mt-1 font-latin text-2xl font-semibold text-danger">{expiredCount}</p>
+          <p className="mt-1 font-display text-2xl font-semibold text-danger">{expiredCount}</p>
           <Link
             href="/admin/subscriptions?state=EXPIRED"
             className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
@@ -253,7 +254,7 @@ export default async function AdminDashboardOverviewPage() {
 
         <Card className="p-4">
           <p className="text-xs text-text-muted">معتمدون بلا اشتراك</p>
-          <p className="mt-1 font-latin text-2xl font-semibold text-text">
+          <p className="mt-1 font-display text-2xl font-semibold text-text">
             {approvedWithoutSubCount}
           </p>
           <span className="mt-2 block text-xs text-text-muted">غير ظاهرين للزوار</span>
@@ -261,19 +262,19 @@ export default async function AdminDashboardOverviewPage() {
 
         <Card className="p-4">
           <p className="text-xs text-text-muted">إيرادات هذا الشهر</p>
-          <p className="mt-1 font-latin text-xl font-semibold text-text">
-            {revenueMonth.toLocaleString("en-US")} <span className="text-xs font-normal">EGP</span>
+          <p className="mt-1 font-display text-xl font-semibold text-text">
+            {formatMoney(revenueMonth)}
           </p>
           <span className="mt-2 block text-xs text-text-muted">بتوقيت القاهرة</span>
         </Card>
 
         <Card className="p-4">
           <p className="text-xs text-text-muted">إيرادات هذا العام / الإجمالي</p>
-          <p className="mt-1 font-latin text-base font-semibold text-text">
-            {revenueYear.toLocaleString("en-US")} <span className="text-xs font-normal">EGP</span>
+          <p className="mt-1 font-display text-base font-semibold text-text">
+            {formatMoney(revenueYear)}
           </p>
-          <p className="mt-1 font-latin text-xs text-text-muted">
-            الإجمالي: {revenueTotal.toLocaleString("en-US")} EGP
+          <p className="mt-1 text-xs text-text-muted">
+            الإجمالي: {formatMoney(revenueTotal)}
           </p>
         </Card>
       </div>

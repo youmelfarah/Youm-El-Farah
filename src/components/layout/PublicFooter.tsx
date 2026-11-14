@@ -7,6 +7,10 @@ export function PublicFooter() {
   return (
     <footer
       data-theme="dark"
+      style={{
+        backgroundColor: "var(--surface)",
+        color: "var(--text)",
+      }}
       className="border-t border-border bg-surface text-text transition-colors"
     >
       <Container className="py-16 sm:py-20 lg:py-24">

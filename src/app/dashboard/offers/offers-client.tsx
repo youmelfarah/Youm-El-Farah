@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui/field";
 import { EmptyState } from "@/components/ui/empty-state";
+import { formatMoney } from "@/lib/format-money";
 
 export interface OfferItem {
   id: string;
@@ -190,7 +191,7 @@ export function OffersClient({
                     <p className="mt-1 font-latin text-sm font-semibold text-accent-text">
                       {offer.price === null
                         ? "تواصل لمعرفة السعر"
-                        : `${offer.price.toLocaleString("en-US")} EGP`}
+                        : formatMoney(offer.price)}
                     </p>
                   </div>
 

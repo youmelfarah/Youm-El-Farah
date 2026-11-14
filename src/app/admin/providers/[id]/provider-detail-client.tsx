@@ -25,6 +25,7 @@ import {
   toggleProviderActiveAction,
 } from "@/app/admin/provider-accounts/actions";
 import { SubscriptionState } from "@/lib/subscription";
+import { formatMoney } from "@/lib/format-money";
 import { PaymentMethod, ProviderStatus } from "@prisma/client";
 
 interface ProviderDetailProps {
@@ -768,8 +769,8 @@ export function ProviderDetailClient({ provider }: ProviderDetailProps) {
                         <tr key={s.id}>
                           <AdminTd className="text-xs">{s.startsAtFormatted}</AdminTd>
                           <AdminTd className="text-xs font-semibold">{s.lastCoveredDayFormatted}</AdminTd>
-                          <AdminTd className="text-xs font-bold">
-                            {s.amountPaid !== null ? `${s.amountPaid} ج.م` : "-"}
+                          <AdminTd className="text-xs font-bold font-latin">
+                            {formatMoney(s.amountPaid)}
                           </AdminTd>
                           <AdminTd className="text-xs">{formatPaymentMethod(s.paymentMethod)}</AdminTd>
                           <AdminTd className="text-xs text-text-muted">{s.paymentNote || "-"}</AdminTd>

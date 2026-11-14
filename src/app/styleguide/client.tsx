@@ -103,6 +103,8 @@ import { Placeholder } from "@/components/ui/placeholder";
 import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { formatMoney } from "@/lib/format-money";
+import { Bidi, BidiDate, BidiPhone } from "@/components/ui/bidi";
 
 const lightColorTokens = [
   { name: "surface", hex: "#F5EFE6", desc: "خلفية الصفحة الرئيسية (Ivory 100)" },
@@ -181,10 +183,10 @@ export function StyleGuideClient() {
                 </Badge>
               </div>
               <h1 className="font-display text-xl sm:text-2xl font-bold text-text mt-1">
-                نظام تصميم يوم الفرح (Youm El-Farah Design System)
+                نظام تصميم يوم الفرح <Bidi dir="ltr">(Youm El-Farah Design System)</Bidi>
               </h1>
               <p className="text-xs text-text-muted mt-0.5">
-                فخامة تحريرية (Editorial Luxury) • بساطة هادئة • توافق تام مع WCAG AA • خطوط عربية ولاتينية مخصصة
+                فخامة تحريرية <Bidi dir="ltr">(Editorial Luxury)</Bidi> • بساطة هادئة • توافق تام مع <Bidi dir="ltr">WCAG AA</Bidi> • خطوط عربية ولاتينية مخصصة
               </p>
             </div>
 
@@ -229,111 +231,167 @@ export function StyleGuideClient() {
           </Container>
         </div>
 
-        {/* SECTION 1: PUBLIC HEADER PREVIEW */}
-        <section className="border-b border-border bg-surface">
+        {/* SECTION 1 & 2: EDITORIAL HYBRID PROOF (DARK HERO BAND + LIGHT CONTENT SECTION) */}
+        <section className="border-b border-border">
+          {/* Banner indicator */}
           <div className="border-b border-border/60 bg-surface-muted/60 px-5 py-2.5">
-            <Container>
+            <Container className="flex items-center justify-between">
               <span className="font-latin text-xs uppercase tracking-wider text-accent-text">
-                01. PUBLIC HEADER COMPONENT (SHELL)
+                01. EDITORIAL HYBRID PROOF (DARK HERO BAND FOLLOWED BY LIGHT SECTION)
               </span>
+              <Badge variant="accent" size="sm">
+                نموذج تجريبي <Bidi dir="ltr">(Dev Sample)</Bidi>
+              </Badge>
             </Container>
           </div>
-          <PublicHeader variant="solid" />
-        </section>
 
-        {/* SECTION 2: EDITORIAL HERO SAMPLE SECTION */}
-        <Section
-          spacing="sm"
-          className="border-b border-border"
-        >
-          <Container>
-            <div className="border-b border-border/60 pb-3 mb-8">
-              <span className="font-latin text-xs uppercase tracking-wider text-accent-text">
-                02. EDITORIAL PROOF SECTION (ASYMMETRIC GRID & LUXURY TYPOGRAPHY)
-              </span>
+          {/* 1A. DARK HERO BAND: Full-bleed Placeholder, Dark Scrim, Transparent PublicHeader */}
+          <div
+            data-theme="dark"
+            style={{ backgroundColor: "var(--surface)", color: "var(--text)" }}
+            className="relative w-full overflow-hidden bg-surface text-text transition-colors"
+          >
+            {/* Full-bleed background image placeholder */}
+            <div className="absolute inset-0 z-0">
+              <Placeholder
+                aspectRatio="16:9"
+                label="FULL-BLEED EDITORIAL HERO BACKGROUND"
+                className="h-full w-full rounded-none border-none opacity-30 object-cover"
+              />
+              {/* Dark scrim for text legibility */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-[#17120F]/90 to-[#17120F]" />
             </div>
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
-              <div className="flex flex-col gap-5 lg:col-span-5">
-                <SectionHeading
-                  eyebrow="BENI SUEF WEDDING CURATION"
-                  title="نصنع من تفاصيل زفافكِ لوحة لا تمحى من الذاكرة"
-                  description="دليلكِ الحصري لأرقى قاعات الأفراح واستوديوهات التصوير ومصممي الديكور في بني سويف. مقارنات دقيقة، أسعار معلنة، وتأكيد فوري للحجوزات."
-                />
+            {/* Light PublicHeader variant transparent over the dark scrim */}
+            <div className="relative z-20">
+              <PublicHeader variant="transparent" />
+            </div>
 
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <Button variant="primary" size="lg">
-                    استكشفي القاعات المتاحة
-                  </Button>
-                  <Button variant="secondary" size="lg">
-                    تصفحي الباقات والأسعار
-                  </Button>
-                </div>
+            {/* Dark Hero Content */}
+            <div className="relative z-10 py-16 sm:py-24 lg:py-28">
+              <Container>
+                <div className="max-w-2xl flex flex-col gap-5">
+                  <div className="flex items-center gap-2">
+                    <span className="eyebrow text-accent-text">
+                      EXCLUSIVE EDITORIAL HERO
+                    </span>
+                    <Badge variant="accent" size="sm">
+                      بيانات تجريبية <Bidi dir="ltr">(Sample)</Bidi>
+                    </Badge>
+                  </div>
 
-                <div className="grid grid-cols-3 gap-3 border-t border-border pt-6 mt-4">
-                  <div>
-                    <span className="font-latin text-2xl font-bold text-text">100%</span>
-                    <p className="text-xs text-text-muted mt-0.5">مقدمو خدمات موثقون</p>
-                  </div>
-                  <div>
-                    <span className="font-latin text-2xl font-bold text-text">0-9</span>
-                    <p className="text-xs text-text-muted mt-0.5">أرقام غربية موحدة</p>
-                  </div>
-                  <div>
-                    <span className="font-latin text-2xl font-bold text-text">4.9/5</span>
-                    <p className="text-xs text-text-muted mt-0.5">تقييم العرائس</p>
+                  <h2 className="font-display text-display font-bold text-text leading-tight">
+                    نصنع من تفاصيل زفافكِ لوحة خالدة
+                  </h2>
+
+                  <p className="text-body-lg text-text-muted leading-relaxed">
+                    معاينة حية لتدرج نظام التصميم الهجين: شريط علوي شفاف يعلو بطلاً داكناً فخماً (حبر ليلي #17120F)، تتبعه مباشرة أقسام نهارية عاجية هادئة.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-4 pt-3">
+                    <Button variant="primary" size="lg">
+                      استكشفي القاعات المتاحة
+                    </Button>
+                    <Button variant="secondary" size="lg">
+                      تصفحي الباقات والأسعار
+                    </Button>
                   </div>
                 </div>
+              </Container>
+            </div>
+          </div>
+
+          {/* 1B. LIGHT CONTENT SECTION: Immediately follows to prove hybrid transition */}
+          <Section
+            theme="light"
+            spacing="default"
+            className="border-t border-border"
+          >
+            <Container>
+              <div className="border-b border-border/60 pb-3 mb-8 flex items-center justify-between">
+                <span className="font-latin text-xs uppercase tracking-wider text-accent-text">
+                  HYBRID PROOF: LIGHT CONTENT SECTION (IVORY SURFACE)
+                </span>
+                <Badge variant="neutral" size="sm">
+                  عاجي نهاري <Bidi dir="ltr">(Ivory 100)</Bidi>
+                </Badge>
               </div>
 
-              <div className="lg:col-span-7">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-4">
-                    <Placeholder
-                      aspectRatio="4:5"
-                      label="EDITORIAL COVER PHOTO 4:5"
-                      className="min-h-[260px] border-border-strong"
-                    />
-                    <div className="p-2 border-s-2 border-accent-text">
-                      <p className="text-xs font-medium text-text">
-                        «قاعة اللؤلؤة الملكية - بني سويف الجديدة»
-                      </p>
-                      <p className="text-[11px] text-text-muted mt-0.5">
-                        سعة 450 فرد • إطلالة بانورامية • إضاءة سنمائية
-                      </p>
-                    </div>
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
+                <div className="flex flex-col gap-5 lg:col-span-5">
+                  <SectionHeading
+                    eyebrow="BENI SUEF WEDDING CURATION"
+                    title="أرقى قاعات الأفراح واستوديوهات التصوير"
+                    description="دليلكِ الحصري لأرقى قاعات الأفراح واستوديوهات التصوير ومصممي الديكور في بني سويف. مقارنات دقيقة، أسعار معلنة، وتأكيد فوري للحجوزات."
+                  />
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <Button variant="primary" size="lg">
+                      استعراض كافة الخدمات
+                    </Button>
+                    <Button variant="secondary" size="lg">
+                      طلب استشارة مخصصة
+                    </Button>
                   </div>
 
-                  <div className="flex flex-col gap-4 sm:pt-10">
-                    <div className="rounded-[4px] border border-border bg-surface-raised p-5">
-                      <span className="font-latin text-xs uppercase tracking-wider text-accent-text">
-                        EXCLUSIVE OFFER
-                      </span>
-                      <h4 className="font-display text-base font-semibold text-text mt-1">
-                        عرض باقة تصوير الموسم 2026
-                      </h4>
-                      <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        جلسة تصوير خارجية كاملة بالإضافة إلى ألبوم مخملي فاخر وتصوير سينمائي 4K.
-                      </p>
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="font-latin text-lg font-bold text-text">6,500 EGP</span>
-                        <Button variant="accent" size="sm">
-                          احجزي الموعد
-                        </Button>
+                  <div className="border-t border-border pt-4 mt-2">
+                    <p className="text-xs text-text-muted">
+                      محتوى تحريري تجريبي مخصص لاختبار السلم الطباعي وتوازن المسافات في السمة النهارية.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-7">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-4">
+                      <Placeholder
+                        aspectRatio="4:5"
+                        label="EDITORIAL COVER PHOTO 4:5"
+                        className="min-h-[260px] border-border-strong"
+                      />
+                      <div className="p-2 border-s-2 border-accent-text">
+                        <p className="text-xs font-medium text-text">
+                          «قاعة اللؤلؤة الملكية - بني سويف الجديدة»
+                        </p>
+                        <p className="text-[11px] text-text-muted mt-0.5">
+                          سعة 450 فرد • إطلالة بانورامية • إضاءة سينمائية
+                        </p>
                       </div>
                     </div>
 
-                    <Placeholder
-                      aspectRatio="3:2"
-                      label="ATMOSPHERE PHOTO 3:2"
-                      className="min-h-[180px]"
-                    />
+                    <div className="flex flex-col gap-4 sm:pt-10">
+                      <div className="rounded-[4px] border border-border bg-surface-raised p-5">
+                        <span className="font-latin text-xs uppercase tracking-wider text-accent-text">
+                          EXCLUSIVE OFFER <Bidi dir="ltr">(Sample)</Bidi>
+                        </span>
+                        <h4 className="font-display text-base font-semibold text-text mt-1">
+                          عرض باقة تصوير الموسم 2026
+                        </h4>
+                        <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                          جلسة تصوير خارجية كاملة بالإضافة إلى ألبوم مخملي فاخر وتصوير سينمائي 4K.
+                        </p>
+                        <div className="mt-4 flex items-center justify-between">
+                          <span className="font-latin text-lg font-bold text-text">
+                            {formatMoney(6500)}
+                          </span>
+                          <Button variant="accent" size="sm">
+                            احجزي الموعد
+                          </Button>
+                        </div>
+                      </div>
+
+                      <Placeholder
+                        aspectRatio="3:2"
+                        label="ATMOSPHERE PHOTO 3:2"
+                        className="min-h-[180px]"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Container>
-        </Section>
+            </Container>
+          </Section>
+        </section>
 
         {/* SECTION 3: SIDE-BY-SIDE LIGHT & DARK THEMES */}
         <main className="py-12">
@@ -343,6 +401,7 @@ export function StyleGuideClient() {
               {(activeThemeTab === "both" || activeThemeTab === "light") && (
                 <div
                   data-theme="light"
+                  style={{ backgroundColor: "var(--surface)", color: "var(--text)" }}
                   className="flex flex-col gap-10 rounded-[8px] border border-border bg-surface p-6 sm:p-8"
                 >
                   <div className="border-b border-border pb-4">
@@ -350,7 +409,7 @@ export function StyleGuideClient() {
                       السمة الأساسية [DATA-THEME=&quot;LIGHT&quot;]
                     </Badge>
                     <h2 className="font-display text-2xl font-bold text-text">
-                      السمة النهارية (Light Theme)
+                      السمة النهارية <Bidi dir="ltr">(Light Theme)</Bidi>
                     </h2>
                     <p className="text-xs text-text-muted mt-1">
                       صفحة عاجية دافئة (#F5EFE6) • نصوص بحبر داكن (#17120F) • لمسات شمبانيا ذهبية
@@ -360,7 +419,7 @@ export function StyleGuideClient() {
                   {/* 1. Color Palette */}
                   <div className="flex flex-col gap-3">
                     <h3 className="font-display text-base font-semibold text-text">
-                      رموز الألوان (Color Tokens)
+                      رموز الألوان <Bidi dir="ltr">(Color Tokens)</Bidi>
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {lightColorTokens.map((t) => (
@@ -388,7 +447,7 @@ export function StyleGuideClient() {
                   {/* 2. Typographic Scale */}
                   <div className="flex flex-col gap-4 border-t border-border pt-6">
                     <h3 className="font-display text-base font-semibold text-text">
-                      السلم الطباعي (Type Scale)
+                      السلم الطباعي <Bidi dir="ltr">(Type Scale)</Bidi>
                     </h3>
                     <div className="flex flex-col gap-4">
                       <div>
@@ -464,14 +523,15 @@ export function StyleGuideClient() {
                   {/* 3. Button States */}
                   <div className="flex flex-col gap-4 border-t border-border pt-6">
                     <h3 className="font-display text-base font-semibold text-text">
-                      أزرار النظام بجميع حالاتها (Button States)
+                      أزرار النظام بجميع حالاتها <Bidi dir="ltr">(Button States)</Bidi>
                     </h3>
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <Button variant="primary">أساسي (Primary)</Button>
-                      <Button variant="secondary">ثانوي (Secondary)</Button>
-                      <Button variant="ghost">شفاف (Ghost)</Button>
-                      <Button variant="accent">تأكيد (Accent)</Button>
-                      <Button variant="danger">حذف (Danger)</Button>
+                      <Button variant="primary">أساسي <Bidi dir="ltr">(Primary)</Bidi></Button>
+                      <Button variant="secondary">ثانوي <Bidi dir="ltr">(Secondary)</Bidi></Button>
+                      <Button variant="outline">إطار <Bidi dir="ltr">(Outline)</Bidi></Button>
+                      <Button variant="ghost">شفاف <Bidi dir="ltr">(Ghost)</Bidi></Button>
+                      <Button variant="accent">تأكيد <Bidi dir="ltr">(Accent)</Bidi></Button>
+                      <Button variant="danger">حذف <Bidi dir="ltr">(Danger)</Bidi></Button>
                       <Button variant="primary" loading>
                         تحميل
                       </Button>
@@ -493,7 +553,7 @@ export function StyleGuideClient() {
                   {/* 4. Form Controls */}
                   <div className="flex flex-col gap-4 border-t border-border pt-6">
                     <h3 className="font-display text-base font-semibold text-text">
-                      حقول الإدخال والتحكم (Form Controls)
+                      حقول الإدخال والتحكم <Bidi dir="ltr">(Form Controls)</Bidi>
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
                       <Field
@@ -535,7 +595,8 @@ export function StyleGuideClient() {
                         <Textarea placeholder="اكتبي تفاصيل الباقة والخدمات المشمولة..." />
                       </Field>
 
-                      <div className="flex flex-wrap items-center gap-6 pt-2">
+                      {/* Stacked on mobile (< 640px) */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pt-2">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <Checkbox
                             checked={checkboxValue}
@@ -558,21 +619,21 @@ export function StyleGuideClient() {
                   {/* 5. Feedback, Modals & Menus */}
                   <div className="flex flex-col gap-4 border-t border-border pt-6">
                     <h3 className="font-display text-base font-semibold text-text">
-                      النوافذ والقوائم والتنبيهات (Feedback & Overlays)
+                      النوافذ والقوائم والتنبيهات <Bidi dir="ltr">(Feedback & Overlays)</Bidi>
                     </h3>
                     <div className="flex flex-wrap items-center gap-3">
                       {/* Dialog */}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button variant="secondary" size="sm">
-                            فتح نافذة منبثقة (Dialog)
+                            فتح نافذة منبثقة <Bidi dir="ltr">(Dialog)</Bidi>
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>تأكيد موعد حجز القاعة</DialogTitle>
                             <DialogDescription>
-                              هل أنتِ متأكدة من رغبتكِ في تثبيت الموعد بتاريخ 2026/12/25؟
+                              هل أنتِ متأكدة من رغبتكِ في تثبيت الموعد بتاريخ <Bidi dir="ltr">2026/12/25</Bidi>؟
                             </DialogDescription>
                           </DialogHeader>
                           <div className="rounded-[4px] border border-border bg-surface-muted p-3 text-xs text-text-muted">
@@ -589,7 +650,7 @@ export function StyleGuideClient() {
                       <Sheet>
                         <SheetTrigger asChild>
                           <Button variant="secondary" size="sm">
-                            فتح درج جانبي (Sheet Drawer)
+                            فتح درج جانبي <Bidi dir="ltr">(Sheet Drawer)</Bidi>
                           </Button>
                         </SheetTrigger>
                         <SheetContent side="start">
@@ -601,7 +662,7 @@ export function StyleGuideClient() {
                           </SheetHeader>
                           <div className="flex flex-col gap-4 py-4 text-xs">
                             <Field label="نطاق السعر الأقصى">
-                              <Input placeholder="15000 ج.م" />
+                              <Input placeholder={formatMoney(15000)} />
                             </Field>
                             <Field label="تصنيف الخدمة">
                               <Input placeholder="قاعات أفراح" />
@@ -614,7 +675,7 @@ export function StyleGuideClient() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="secondary" size="sm">
-                            قائمة خيارات (Dropdown)
+                            قائمة خيارات <Bidi dir="ltr">(Dropdown)</Bidi>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
@@ -639,7 +700,7 @@ export function StyleGuideClient() {
 
                     {/* Toast triggers */}
                     <div className="flex flex-wrap items-center gap-2 pt-2">
-                      <span className="text-xs text-text-muted">اختبار الإشعارات (Sonner):</span>
+                      <span className="text-xs text-text-muted">اختبار الإشعارات <Bidi dir="ltr">(Sonner)</Bidi>:</span>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -667,7 +728,7 @@ export function StyleGuideClient() {
                   {/* 6. Cards, Badges, Table & Stats */}
                   <div className="flex flex-col gap-4 border-t border-border pt-6">
                     <h3 className="font-display text-base font-semibold text-text">
-                      البطاقات والشارات والجداول (Cards & Data Display)
+                      البطاقات والشارات والجداول <Bidi dir="ltr">(Cards & Data Display)</Bidi>
                     </h3>
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="neutral">افتراضي</Badge>
@@ -675,6 +736,7 @@ export function StyleGuideClient() {
                       <Badge variant="success">متاح للحجز</Badge>
                       <Badge variant="warning">قيد المراجعة</Badge>
                       <Badge variant="danger">محجوز بالكامل</Badge>
+                      <Badge variant="outline">إطار محدد</Badge>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -702,7 +764,9 @@ export function StyleGuideClient() {
                         </p>
                         <div className="mt-3 flex items-center justify-between">
                           <Rating value={4.8} count={38} />
-                          <span className="font-latin text-sm font-bold text-text">25,000 EGP</span>
+                          <span className="font-latin text-sm font-bold text-text">
+                            {formatMoney(25000)}
+                          </span>
                         </div>
                       </CardContent>
                       <CardFooter>
@@ -731,7 +795,7 @@ export function StyleGuideClient() {
                             <TableCell>
                               <Badge variant="success" size="sm">متاح</Badge>
                             </TableCell>
-                            <TableCell className="text-end font-latin">4,500 EGP</TableCell>
+                            <TableCell className="text-end font-latin">{formatMoney(4500)}</TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell className="font-medium">قاعة فينيسيا</TableCell>
@@ -739,7 +803,7 @@ export function StyleGuideClient() {
                             <TableCell>
                               <Badge variant="warning" size="sm">قيد الحجز</Badge>
                             </TableCell>
-                            <TableCell className="text-end font-latin">18,000 EGP</TableCell>
+                            <TableCell className="text-end font-latin">{formatMoney(18000)}</TableCell>
                           </TableRow>
                         </TableBody>
                       </Table>
@@ -775,6 +839,7 @@ export function StyleGuideClient() {
               {(activeThemeTab === "both" || activeThemeTab === "dark") && (
                 <div
                   data-theme="dark"
+                  style={{ backgroundColor: "var(--surface)", color: "var(--text)" }}
                   className="flex flex-col gap-10 rounded-[8px] border border-border bg-surface p-6 sm:p-8"
                 >
                   <div className="border-b border-border pb-4">
@@ -782,7 +847,7 @@ export function StyleGuideClient() {
                       السمة الليلية [DATA-THEME=&quot;DARK&quot;]
                     </Badge>
                     <h2 className="font-display text-2xl font-bold text-text">
-                      السمة الليلية الفاخرة (Dark Luxury)
+                      السمة الليلية الفاخرة <Bidi dir="ltr">(Dark Luxury)</Bidi>
                     </h2>
                     <p className="text-xs text-text-muted mt-1">
                       حبر ليلي عميق (#17120F) • نصوص عاجية صريحة (#FBF8F3) • لمسات شمبانيا ذهبية (#B79A6B)
@@ -792,7 +857,7 @@ export function StyleGuideClient() {
                   {/* 1. Color Palette */}
                   <div className="flex flex-col gap-3">
                     <h3 className="font-display text-base font-semibold text-text">
-                      رموز الألوان الليلية (Dark Tokens)
+                      رموز الألوان الليلية <Bidi dir="ltr">(Dark Tokens)</Bidi>
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {darkColorTokens.map((t) => (
@@ -869,14 +934,15 @@ export function StyleGuideClient() {
                   {/* 3. Button States on Dark */}
                   <div className="flex flex-col gap-4 border-t border-border pt-6">
                     <h3 className="font-display text-base font-semibold text-text">
-                      أزرار السمة الليلية
+                      أزرار السمة الليلية (أزرار معكوسة)
                     </h3>
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <Button variant="primary">أساسي (Ivory)</Button>
-                      <Button variant="secondary">ثانوي (Outline)</Button>
-                      <Button variant="ghost">شفاف (Ghost)</Button>
-                      <Button variant="accent">تأكيد ذهبي (Accent)</Button>
-                      <Button variant="danger">حذف (Danger)</Button>
+                      <Button variant="primary">أساسي عاجي <Bidi dir="ltr">(Ivory on Ink)</Bidi></Button>
+                      <Button variant="secondary">ثانوي <Bidi dir="ltr">(Secondary)</Bidi></Button>
+                      <Button variant="outline">إطار عاجي <Bidi dir="ltr">(Outline)</Bidi></Button>
+                      <Button variant="ghost">شفاف <Bidi dir="ltr">(Ghost)</Bidi></Button>
+                      <Button variant="accent">تأكيد ذهبي <Bidi dir="ltr">(Accent)</Bidi></Button>
+                      <Button variant="danger">حذف <Bidi dir="ltr">(Danger)</Bidi></Button>
                       <Button variant="accent" loading>
                         تحميل
                       </Button>
@@ -889,7 +955,7 @@ export function StyleGuideClient() {
                   {/* 4. Form Controls on Dark */}
                   <div className="flex flex-col gap-4 border-t border-border pt-6">
                     <h3 className="font-display text-base font-semibold text-text">
-                      حقول الإدخال على الخلفية الداكنة
+                      حقول الإدخال على الخلفية الداكنة <Bidi dir="ltr">(Form Controls)</Bidi>
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
                       <Field label="اسم مقدم الخدمة" required>
@@ -907,7 +973,9 @@ export function StyleGuideClient() {
                           </SelectContent>
                         </Select>
                       </Field>
-                      <div className="flex items-center gap-6">
+
+                      {/* Stacked on mobile (< 640px) */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pt-2">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <Checkbox
                             checked={checkboxValue}
@@ -926,11 +994,74 @@ export function StyleGuideClient() {
                     </div>
                   </div>
 
-                  {/* 5. Cards & Stats on Dark */}
+                  {/* 5. Dark Dialogs & Feedback */}
                   <div className="flex flex-col gap-4 border-t border-border pt-6">
                     <h3 className="font-display text-base font-semibold text-text">
-                      البطاقات والإحصاءات الليلية
+                      النوافذ الليلية <Bidi dir="ltr">(Dark Dialogs & Feedback)</Bidi>
                     </h3>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="secondary" size="sm">
+                            فتح نافذة ليلية <Bidi dir="ltr">(Dark Dialog)</Bidi>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent theme="dark">
+                          <DialogHeader>
+                            <DialogTitle>تأكيد الحجز الليلي الفاخر</DialogTitle>
+                            <DialogDescription>
+                              نافذة منبثقة تقرأ الرموز الدلالية الليلية بالكامل.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="rounded-[4px] border border-border bg-surface-muted p-3 text-xs text-text-muted">
+                            الموعد المحجوز: قصر الفيروز • بني سويف • السعر: {formatMoney(32000)}.
+                          </div>
+                          <DialogFooter>
+                            <Button variant="secondary">إلغاء</Button>
+                            <Button variant="primary">تأكيد الحجز</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+
+                  {/* 6. Tabs on Dark */}
+                  <div className="flex flex-col gap-3 border-t border-border pt-6">
+                    <h3 className="font-display text-base font-semibold text-text">
+                      ألسنة التبويب الليلية <Bidi dir="ltr">(Dark Tabs)</Bidi>
+                    </h3>
+                    <Tabs defaultValue="overview" className="w-full">
+                      <TabsList className="w-full justify-start">
+                        <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+                        <TabsTrigger value="pricing">الأسعار والباقات</TabsTrigger>
+                        <TabsTrigger value="reviews">التقييمات</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="overview" className="rounded-[4px] border border-border bg-surface-raised p-4 text-xs text-text-muted">
+                        معلومات تفصيلية عن القاعة وخدمات الضيافة المتاحة على السطح الداكن المرتفع.
+                      </TabsContent>
+                      <TabsContent value="pricing" className="rounded-[4px] border border-border bg-surface-raised p-4 text-xs text-text-muted">
+                        أسعار باقات الزفاف وتفاصيل الدفع.
+                      </TabsContent>
+                      <TabsContent value="reviews" className="rounded-[4px] border border-border bg-surface-raised p-4 text-xs text-text-muted">
+                        آراء العرائس الموثقة.
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+
+                  {/* 7. Cards, Badges, Table & Stats on Dark */}
+                  <div className="flex flex-col gap-4 border-t border-border pt-6">
+                    <h3 className="font-display text-base font-semibold text-text">
+                      البطاقات والشارات والجداول الليلية <Bidi dir="ltr">(Dark Cards & Data)</Bidi>
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="neutral">افتراضي</Badge>
+                      <Badge variant="accent">باقة مميزة</Badge>
+                      <Badge variant="success">متاح للحجز</Badge>
+                      <Badge variant="warning">قيد المراجعة</Badge>
+                      <Badge variant="danger">محجوز بالكامل</Badge>
+                      <Badge variant="outline">إطار محدد</Badge>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3">
                       <Stat
                         label="إجمالي الحجوزات"
@@ -955,7 +1086,9 @@ export function StyleGuideClient() {
                         </p>
                         <div className="mt-3 flex items-center justify-between">
                           <Rating value={4.9} count={52} />
-                          <span className="font-latin text-sm font-bold text-accent-text">32,000 EGP</span>
+                          <span className="font-latin text-sm font-bold text-accent-text">
+                            {formatMoney(32000)}
+                          </span>
                         </div>
                       </CardContent>
                       <CardFooter>
@@ -964,6 +1097,39 @@ export function StyleGuideClient() {
                         </Button>
                       </CardFooter>
                     </Card>
+
+                    {/* Dark Table */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-xs font-semibold text-text">جدول بيانات ليلي:</span>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>المقدم</TableHead>
+                            <TableHead>التصنيف</TableHead>
+                            <TableHead>الحالة</TableHead>
+                            <TableHead className="text-end">السعر</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="font-medium">ستوديو الأندلس</TableCell>
+                            <TableCell>تصوير سينمائي</TableCell>
+                            <TableCell>
+                              <Badge variant="success" size="sm">متاح</Badge>
+                            </TableCell>
+                            <TableCell className="text-end font-latin">{formatMoney(8500)}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="font-medium">قصر الفيروز</TableCell>
+                            <TableCell>قاعات أفراح</TableCell>
+                            <TableCell>
+                              <Badge variant="accent" size="sm">مميز</Badge>
+                            </TableCell>
+                            <TableCell className="text-end font-latin">{formatMoney(32000)}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 </div>
               )}
@@ -976,7 +1142,7 @@ export function StyleGuideClient() {
                   WCAG 2.1 AA COMPLIANCE REPORT
                 </span>
                 <h3 className="font-display text-xl font-bold text-text mt-1">
-                  تقرير التحقق من تباين الألوان (WCAG AA Contrast Results)
+                  تقرير التحقق من تباين الألوان <Bidi dir="ltr">(WCAG AA Contrast Results)</Bidi>
                 </h3>
                 <p className="text-xs text-text-muted mt-1">
                   يتحقق الاختبار التلقائي من نسبة تباين لا تقل عن 4.5:1 للنصوص الأساسية و 3.0:1 للعناصر الكبيرة وحدود الواجهة.
@@ -988,9 +1154,9 @@ export function StyleGuideClient() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>السمة</TableHead>
-                      <TableHead>الرمز اللوني (Token)</TableHead>
-                      <TableHead>لون النص (Foreground)</TableHead>
-                      <TableHead>الخلفية (Background)</TableHead>
+                      <TableHead>الرمز اللوني <Bidi dir="ltr">(Token)</Bidi></TableHead>
+                      <TableHead>لون النص <Bidi dir="ltr">(Foreground)</Bidi></TableHead>
+                      <TableHead>الخلفية <Bidi dir="ltr">(Background)</Bidi></TableHead>
                       <TableHead>نسبة التباين الفعلية</TableHead>
                       <TableHead>الحد الأدنى المطلوب</TableHead>
                       <TableHead className="text-end">حالة الفحص</TableHead>
@@ -1024,7 +1190,7 @@ export function StyleGuideClient() {
                   BRAND IDENTITY WORDMARK
                 </span>
                 <h3 className="font-display text-xl font-bold text-text mt-1">
-                  شعار العلامة التجارية (Logo Variants)
+                  شعار العلامة التجارية <Bidi dir="ltr">(Logo Variants)</Bidi>
                 </h3>
                 <p className="text-xs text-text-muted mt-1">
                   يتم استيراد الشعار حصرياً من مكون Logo.tsx ليتاح استبداله بنقرة واحدة لاحقاً.
@@ -1054,7 +1220,7 @@ export function StyleGuideClient() {
                   MEDIA SYSTEM
                 </span>
                 <h3 className="font-display text-xl font-bold text-text mt-1">
-                  نسب الصور والعناصر النائبة (Aspect Ratio Presets)
+                  نسب الصور والعناصر النائبة <Bidi dir="ltr">(Aspect Ratio Presets)</Bidi>
                 </h3>
               </div>
 
@@ -1073,7 +1239,7 @@ export function StyleGuideClient() {
           <div className="border-y border-border/60 bg-surface-muted/60 px-5 py-2.5">
             <Container>
               <span className="font-latin text-xs uppercase tracking-wider text-accent-text">
-                04. PUBLIC FOOTER COMPONENT (SHELL - DARK LUXURY)
+                04. PUBLIC FOOTER COMPONENT <Bidi dir="ltr">(SHELL - DARK LUXURY)</Bidi>
               </span>
             </Container>
           </div>

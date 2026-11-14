@@ -29,7 +29,7 @@ export function Stat({
     >
       <span className="text-xs font-medium text-text-muted">{label}</span>
       <div className="flex items-baseline gap-2">
-        <span className="font-latin text-3xl sm:text-4xl font-semibold tracking-tight text-text">
+        <span className="font-display text-3xl sm:text-4xl font-semibold tracking-tight text-text">
           {value}
         </span>
         {trend && (

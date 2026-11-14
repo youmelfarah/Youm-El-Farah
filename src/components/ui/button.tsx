@@ -24,7 +24,7 @@ export const buttonVariants = cva(
         "outline-danger":
           "border border-danger/40 text-danger hover:bg-danger-muted",
         outline:
-          "border border-border-strong text-text hover:bg-surface-muted",
+          "border border-text/40 text-text hover:bg-surface-muted hover:border-text/60",
         success:
           "bg-success text-text-inverse hover:opacity-90 active:opacity-95",
       },

@@ -17,36 +17,38 @@ export function Logo({
 }: LogoProps) {
   const sizeClasses = {
     sm: {
-      ar: "text-lg",
-      en: "text-[9px] tracking-[0.18em]",
+      ar: "text-base sm:text-lg",
+      en: "text-[8px] sm:text-[9px] tracking-[0.18em]",
       gap: "gap-0.5",
     },
     md: {
-      ar: "text-2xl",
-      en: "text-[11px] tracking-[0.18em]",
-      gap: "gap-1",
+      ar: "text-xl sm:text-2xl",
+      en: "text-[10px] sm:text-[11px] tracking-[0.18em]",
+      gap: "gap-0.5 sm:gap-1",
     },
     lg: {
-      ar: "text-3xl sm:text-4xl",
-      en: "text-xs sm:text-sm tracking-[0.18em]",
-      gap: "gap-1.5",
+      ar: "text-2xl sm:text-3xl lg:text-4xl",
+      en: "text-[11px] sm:text-xs lg:text-sm tracking-[0.18em]",
+      gap: "gap-1 sm:gap-1.5",
     },
   }[size];
 
   const content = (
     <div
       className={cn(
-        "inline-flex select-none",
+        "inline-flex select-none whitespace-nowrap",
         variant === "stacked" && "flex-col items-start leading-none",
-        variant === "horizontal" && "flex-row items-baseline gap-2.5 leading-none",
+        variant === "horizontal" &&
+          "flex-col items-start leading-none sm:flex-row sm:items-baseline sm:gap-2.5",
         variant === "mark-less" && "flex-col items-start leading-none",
         sizeClasses.gap,
         className
       )}
     >
       <span
+        style={{ whiteSpace: "nowrap" }}
         className={cn(
-          "font-display font-semibold text-text transition-colors",
+          "font-display font-semibold text-text transition-colors whitespace-nowrap",
           sizeClasses.ar
         )}
       >
@@ -56,10 +58,10 @@ export function Logo({
       {variant !== "mark-less" && (
         <span
           className={cn(
-            "font-latin uppercase text-accent-text transition-colors",
+            "font-latin uppercase text-accent-text transition-colors whitespace-nowrap",
             sizeClasses.en
           )}
-          style={{ letterSpacing: "0.18em" }}
+          style={{ letterSpacing: "0.18em", whiteSpace: "nowrap" }}
         >
           {brand.name.en}
         </span>

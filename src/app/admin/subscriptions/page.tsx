@@ -10,6 +10,7 @@ import {
 } from "@/lib/cairo-time";
 import { formatArabicDateString } from "@/lib/calendar-dates";
 import { getSubscriptionState, SubscriptionState } from "@/lib/subscription";
+import { formatMoney } from "@/lib/format-money";
 import { Card as AdminCard } from "@/components/ui/card";
 import { Badge as AdminBadge } from "@/components/ui/badge";
 import {
@@ -266,8 +267,8 @@ export default async function AdminSubscriptionsPage(props: {
                 </div>
                 <div>
                   <span className="text-text-muted">المبلغ: </span>
-                  <span className="font-bold">
-                    {item.amountPaid !== null ? `${item.amountPaid} ج.م` : "-"}
+                  <span className="font-bold font-latin">
+                    {formatMoney(item.amountPaid)}
                   </span>
                 </div>
                 <div>
@@ -348,8 +349,8 @@ export default async function AdminSubscriptionsPage(props: {
                       <span className="text-xs font-bold text-danger">منتهي</span>
                     )}
                   </AdminTd>
-                  <AdminTd className="text-xs font-bold text-text">
-                    {item.amountPaid !== null ? `${item.amountPaid} ج.م` : "-"}
+                  <AdminTd className="text-xs font-bold font-latin text-text">
+                    {formatMoney(item.amountPaid)}
                   </AdminTd>
                   <AdminTd className="text-xs">{formatPaymentMethod(item.paymentMethod)}</AdminTd>
                   <AdminTd>
