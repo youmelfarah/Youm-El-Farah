@@ -9,6 +9,8 @@
     "db:migrate": "prisma migrate dev",
     "db:apply": "node scripts/apply-sql.mjs",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:clean:demo": "tsx prisma/clean-demo.ts",
     "db:studio": "prisma studio"
   },
   "prisma": {

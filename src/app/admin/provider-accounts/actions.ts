@@ -25,8 +25,9 @@ export async function createProviderAction(input: {
   email: string;
   password: string;
 }): Promise<{ error?: string; temporaryPassword?: string }> {
+  let session;
   try {
-    await requireRoleAction("ADMIN");
+    session = await requireRoleAction("ADMIN");
   } catch {
     return { error: "ليس لديك صلاحية للوصول" };
   }
@@ -64,18 +65,34 @@ export async function createProviderAction(input: {
       },
     });
 
-    // Ensure non-input additionalFields are persisted accurately
-    await prisma.user.update({
-      where: { email },
-      data: {
-        role: "PROVIDER",
-        mustChangePassword: true,
-        emailVerified: true,
-        isActive: true,
-        banned: false,
-        banReason: null,
-        banExpires: null,
-      },
+    // Ensure non-input additionalFields and audit log are persisted in one transaction
+    await prisma.$transaction(async (tx) => {
+      const u = await tx.user.update({
+        where: { email },
+        data: {
+          role: "PROVIDER",
+          mustChangePassword: true,
+          emailVerified: true,
+          isActive: true,
+          banned: false,
+          banReason: null,
+          banExpires: null,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          adminId: session.user.id,
+          action: "account.create",
+          entityType: "User",
+          entityId: u.id,
+          details: {
+            name: u.name,
+            email: u.email,
+            role: "PROVIDER",
+          },
+        },
+      });
     });
 
     return { temporaryPassword: parsed.data.password };
@@ -91,8 +108,9 @@ export async function createProviderAction(input: {
 export async function resetProviderPasswordAction(input: {
   userId: string;
 }): Promise<{ error?: string; temporaryPassword?: string }> {
+  let session;
   try {
-    await requireRoleAction("ADMIN");
+    session = await requireRoleAction("ADMIN");
   } catch {
     return { error: "ليس لديك صلاحية للوصول" };
   }
@@ -104,7 +122,7 @@ export async function resetProviderPasswordAction(input: {
 
   const user = await prisma.user.findUnique({
     where: { id: parsed.data.userId },
-    select: { role: true },
+    select: { role: true, email: true },
   });
 
   if (!user || user.role !== "PROVIDER") {
@@ -123,9 +141,29 @@ export async function resetProviderPasswordAction(input: {
       },
     });
 
-    await prisma.user.update({
-      where: { id: parsed.data.userId },
-      data: { mustChangePassword: true },
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: parsed.data.userId },
+        data: { mustChangePassword: true },
+      });
+
+      const provider = await tx.provider.findUnique({
+        where: { userId: parsed.data.userId },
+        select: { id: true },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          adminId: session.user.id,
+          action: "account.reset_password",
+          entityType: "User",
+          entityId: parsed.data.userId,
+          providerId: provider?.id ?? null,
+          details: {
+            email: user.email,
+          },
+        },
+      });
     });
 
     await auth.api.revokeUserSessions({
@@ -160,7 +198,7 @@ export async function toggleProviderActiveAction(input: {
 
   const user = await prisma.user.findUnique({
     where: { id: parsed.data.userId },
-    select: { role: true, isActive: true },
+    select: { role: true, isActive: true, email: true },
   });
 
   if (!user || user.role !== "PROVIDER") {
@@ -168,10 +206,43 @@ export async function toggleProviderActiveAction(input: {
   }
 
   const newIsActive = !user.isActive;
-  await setUserActiveStatus({
-    userId: parsed.data.userId,
-    isActive: newIsActive,
-    banReason: newIsActive ? null : "Account deactivated by admin",
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: parsed.data.userId },
+      data: {
+        isActive: newIsActive,
+        banned: !newIsActive,
+        banReason: newIsActive ? null : "Account deactivated by admin",
+        banExpires: null,
+      },
+    });
+
+    if (!newIsActive) {
+      await tx.session.deleteMany({
+        where: { userId: parsed.data.userId },
+      });
+    }
+
+    const provider = await tx.provider.findUnique({
+      where: { userId: parsed.data.userId },
+      select: { id: true },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        adminId: session.user.id,
+        action: "account.toggle_active",
+        entityType: "User",
+        entityId: parsed.data.userId,
+        providerId: provider?.id ?? null,
+        details: {
+          email: user.email,
+          before: { isActive: user.isActive },
+          after: { isActive: newIsActive },
+        },
+      },
+    });
   });
 
   return { isActive: newIsActive };
