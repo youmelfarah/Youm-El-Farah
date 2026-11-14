@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CaretUp, CaretDown, Tag, Plus } from "@phosphor-icons/react";
 import {
   createOfferAction,
   deleteOfferAction,
@@ -9,6 +10,13 @@ import {
   toggleOfferActiveAction,
   updateOfferAction,
 } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Field } from "@/components/ui/field";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export interface OfferItem {
   id: string;
@@ -77,36 +85,44 @@ export function OffersClient({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div>
-          <h1 className="text-lg font-bold text-gray-900">العروض والباقات</h1>
-          <p className="mt-0.5 text-sm font-medium text-gray-600">
-            استخدمت {offers.length} من {limit}
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Top Header Card */}
+      <Card>
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="font-display text-2xl font-bold text-text sm:text-3xl">
+                العروض والباقات
+              </h1>
+              <p className="mt-1 text-xs text-text-muted">
+                استخدمت <span className="font-latin font-bold text-text">{offers.length}</span> من أصل{" "}
+                <span className="font-latin font-bold text-text">{limit}</span> عروض متاحة في باقتك.
+              </p>
+            </div>
 
-        <button
-          type="button"
-          disabled={atLimit || isSuspended}
-          onClick={() => {
-            setShowCreate((prev) => !prev);
-            setEditingId(null);
-          }}
-          className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {showCreate ? "إلغاء" : "إضافة عرض جديد"}
-        </button>
-      </div>
+            <Button
+              type="button"
+              disabled={atLimit || isSuspended}
+              onClick={() => {
+                setShowCreate((prev) => !prev);
+                setEditingId(null);
+              }}
+              variant={showCreate ? "secondary" : "primary"}
+            >
+              {showCreate ? "إلغاء الإضافة" : "إضافة عرض جديد"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {atLimit && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-          لقد وصلت إلى الحد الأقصى للعروض المسموح بها ({limit}). يمكنك تعديل أو حذف عرض حالي لإضافة عرض جديد.
+        <div className="rounded-[4px] border border-warning/40 bg-warning-muted p-4 text-xs font-medium text-text">
+          لقد وصلتِ إلى الحد الأقصى للعروض المسموح بها (<span className="font-latin font-bold">{limit}</span>). يمكنكِ تعديل أو حذف عرض حالي لإضافة عرض جديد.
         </div>
       )}
 
       {globalError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-[4px] border border-danger/30 bg-danger-muted p-3 text-xs text-danger">
           {globalError}
         </div>
       )}
@@ -123,11 +139,23 @@ export function OffersClient({
       )}
 
       {offers.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
-          لا توجد عروض مضافة بعد.
-        </div>
+        <EmptyState
+          icon={<Tag className="h-6 w-6" weight="light" />}
+          title="لا توجد عروض مضافة بعد"
+          description="أضيفي عروضكِ وباقات الزفاف لتسهيل مقارنة الأسعار والخدمات على العرائس."
+          action={
+            !isSuspended && (
+              <Button
+                variant="primary"
+                onClick={() => setShowCreate(true)}
+              >
+                إضافة أول عرض
+              </Button>
+            )
+          }
+        />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {offers.map((offer, index) => {
             const isEditing = editingId === offer.id;
             const isBusy = busyId === offer.id;
@@ -148,93 +176,91 @@ export function OffersClient({
             }
 
             return (
-              <div
-                key={offer.id}
-                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
+              <Card key={offer.id} className="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-base font-bold text-gray-900">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h2 className="font-display text-base font-semibold text-text">
                         {offer.title}
                       </h2>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          offer.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
+                      <Badge variant={offer.isActive ? "success" : "neutral"} size="sm">
                         {offer.isActive ? "نشط" : "غير نشط"}
-                      </span>
+                      </Badge>
                     </div>
-                    <p className="mt-1 text-sm font-semibold text-blue-700">
+                    <p className="mt-1 font-latin text-sm font-semibold text-accent-text">
                       {offer.price === null
                         ? "تواصل لمعرفة السعر"
-                        : `${offer.price.toLocaleString("ar-EG")} ج.م`}
+                        : `${offer.price.toLocaleString("en-US")} EGP`}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
+                      iconOnly
                       disabled={isSuspended || isBusy || index === 0}
                       onClick={() => handleReorder(offer.id, "up")}
                       aria-label="تحريك لأعلى"
-                      className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                      className="h-8 w-8 min-h-[32px] min-w-[32px]"
                     >
-                      ↑
-                    </button>
-                    <button
+                      <CaretUp className="h-3.5 w-3.5" weight="bold" />
+                    </Button>
+                    <Button
                       type="button"
-                      disabled={
-                        isSuspended || isBusy || index === offers.length - 1
-                      }
+                      variant="secondary"
+                      size="sm"
+                      iconOnly
+                      disabled={isSuspended || isBusy || index === offers.length - 1}
                       onClick={() => handleReorder(offer.id, "down")}
                       aria-label="تحريك لأسفل"
-                      className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                      className="h-8 w-8 min-h-[32px] min-w-[32px]"
                     >
-                      ↓
-                    </button>
+                      <CaretDown className="h-3.5 w-3.5" weight="bold" />
+                    </Button>
                   </div>
                 </div>
 
                 {offer.description && (
-                  <p className="mt-2 whitespace-pre-line text-sm text-gray-700">
+                  <p className="mt-2.5 whitespace-pre-line text-xs text-text-muted leading-relaxed">
                     {offer.description}
                   </p>
                 )}
 
-                <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
-                  <button
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     disabled={isSuspended || isBusy}
                     onClick={() => {
                       setEditingId(offer.id);
                       setShowCreate(false);
                     }}
-                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     تعديل
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     disabled={isSuspended || isBusy}
                     onClick={() => handleToggle(offer.id)}
-                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     {offer.isActive ? "إخفاء" : "تفعيل"}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="danger-outline"
+                    size="sm"
                     disabled={isSuspended || isBusy}
                     onClick={() => handleDelete(offer.id)}
-                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
                   >
                     حذف
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -291,84 +317,72 @@ function OfferForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-3 rounded-xl border border-blue-200 bg-white p-4 shadow-sm"
-    >
-      <h2 className="text-sm font-bold text-gray-900">
-        {mode === "create" ? "إضافة عرض جديد" : "تعديل العرض"}
-      </h2>
+    <Card className="p-5">
+      <CardHeader className="p-0 pb-3 mb-4 border-b border-border">
+        <CardTitle>{mode === "create" ? "إضافة عرض جديد" : "تعديل بيانات العرض"}</CardTitle>
+      </CardHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="عنوان العرض أو الباقة" required>
+          <Input
+            type="text"
+            required
+            minLength={2}
+            maxLength={80}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="مثال: باقة الزفاف الملكية المتكاملة"
+          />
+        </Field>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          عنوان العرض <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          required
-          minLength={2}
-          maxLength={80}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="مثال: باقة الزفاف الذهبية"
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-        />
-      </div>
+        <Field
+          label="السعر بالجنيه المصري (اختياري - أرقام غربية 0-9)"
+          helpText="اتركيه فارغاً ليظهر للزوار: تواصل لمعرفة السعر"
+        >
+          <Input
+            type="number"
+            min={0}
+            max={1000000}
+            step={1}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="مثال: 12000"
+            dir="ltr"
+          />
+        </Field>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          السعر بالجنيه المصري (اختياري)
-        </label>
-        <input
-          type="number"
-          min={0}
-          max={1000000}
-          step={1}
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="اتركه فارغاً ليظهر: تواصل لمعرفة السعر"
-          dir="ltr"
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-        />
-      </div>
+        <Field label="تفاصيل ومكونات العرض (اختياري)">
+          <Textarea
+            rows={3}
+            maxLength={1000}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="اذكري ما تشمله الباقة من خدمات، ساعات العمل، والتجهيزات..."
+          />
+        </Field>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          تفاصيل العرض (اختياري، نص عادي)
-        </label>
-        <textarea
-          rows={3}
-          maxLength={1000}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="اذكر ما يشمله العرض..."
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-        />
-      </div>
+        {error && (
+          <div className="rounded-[4px] border border-danger/30 bg-danger-muted p-2.5 text-xs text-danger">
+            {error}
+          </div>
+        )}
 
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
+        <div className="flex gap-2 pt-1">
+          <Button
+            type="submit"
+            loading={loading}
+            variant="primary"
+          >
+            حفظ العرض
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCancel}
+          >
+            إلغاء
+          </Button>
         </div>
-      )}
-
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "جارٍ الحفظ..." : "حفظ"}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          إلغاء
-        </button>
-      </div>
-    </form>
+      </form>
+    </Card>
   );
 }
-

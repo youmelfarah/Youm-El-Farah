@@ -4,10 +4,20 @@ import { AuthError, requireRole } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { toCairoDateString } from "@/lib/cairo-time";
 import { formatArabicDateString } from "@/lib/calendar-dates";
-import { AdminCard } from "@/components/admin/card";
-import { AdminBadge } from "@/components/admin/badge";
-import { AdminTable, AdminTableBody, AdminTableHead, AdminTd, AdminTh } from "@/components/admin/table";
-import { AdminPagination } from "@/components/admin/pagination";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  MobileCardList,
+  MobileCardItem,
+} from "@/components/ui/table";
+import { DataPagination } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
 import { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -59,70 +69,104 @@ export default async function AdminAuditLogPage(props: {
           select: { id: true, name: true, email: true },
         },
         provider: {
-          select: { id: true, name: true, slug: true },
+          select: { id: true, name: true },
         },
       },
     }),
     prisma.provider.findMany({
-      orderBy: { name: "asc" },
       select: { id: true, name: true },
+      orderBy: { name: "asc" },
     }),
   ]);
 
-  const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+
+  function formatDateWithTime(date: Date) {
+    const cairoDate = toCairoDateString(date);
+    const time = date.toLocaleTimeString("en-US", {
+      timeZone: "Africa/Cairo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return `${formatArabicDateString(cairoDate)} - ${time}`;
+  }
+
+  function formatActionLabel(action: string) {
+    switch (action) {
+      case "PROVIDER_APPROVE":
+        return "اعتماد مقدم خدمة";
+      case "PROVIDER_REJECT":
+        return "رفض مقدم خدمة";
+      case "PROVIDER_SUSPEND":
+        return "إيقاف مؤقت";
+      case "PROVIDER_UNSUSPEND":
+        return "إلغاء الإيقاف";
+      case "PROVIDER_EDIT":
+        return "تعديل بيانات";
+      case "SUBSCRIPTION_GRANT":
+        return "منح اشتراك";
+      case "SUBSCRIPTION_CANCEL":
+        return "إلغاء اشتراك";
+      case "CATEGORY_CREATE":
+        return "إضافة فئة";
+      case "CATEGORY_EDIT":
+        return "تعديل فئة";
+      case "CATEGORY_DELETE":
+        return "حذف فئة";
+      case "PROVIDER_CREATE":
+        return "إنشاء حساب مقدم";
+      case "PROVIDER_TOGGLE_ACTIVE":
+        return "تغيير حالة الحساب";
+      case "PROVIDER_RESET_PASSWORD":
+        return "إعادة تعيين كلمة المرور";
+      default:
+        return action;
+    }
+  }
 
   return (
     <div className="space-y-6">
-      <div className="border-b border-border pb-4">
-        <h1 className="text-xl font-bold text-text sm:text-2xl">سجل النشاط (Audit Log)</h1>
-        <p className="mt-1 text-xs text-text-muted">
-          توثيق كامل لكافة الإجراءات والتعديلات الإدارية في النظام لضمان النزاهة والشفافية.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-text sm:text-3xl">سجل النشاط الإداري</h1>
+          <p className="mt-1 text-xs text-text-muted">
+            سجل غير قابل للتعديل لجميع العمليات الإدارية الحساسة على المنصة.
+          </p>
+        </div>
       </div>
 
-      {/* Filters */}
-      <AdminCard className="p-4">
-        <form method="GET" className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+      {/* Filter Toolbar */}
+      <Card className="p-4">
+        <form
+          method="GET"
+          action="/admin/audit-log"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+        >
           <div>
-            <label className="block text-xs font-medium text-text mb-1">
+            <label className="mb-1 block text-xs font-medium text-text">
               نوع الإجراء
             </label>
             <select
               name="actionPrefix"
               defaultValue={actionPrefix}
-              className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-text focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-11 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-xs text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">كل الإجراءات</option>
-              <option value="provider">إجراءات مقدمي الخدمة (provider.*)</option>
-              <option value="subscription">إجراءات الاشتراكات (subscription.*)</option>
-              <option value="category">إجراءات الفئات (category.*)</option>
-              <option value="account">إجراءات الحسابات (account.*)</option>
-              <option value="provider.approve">اعتماد ملف (provider.approve)</option>
-              <option value="provider.suspend">إيقاف حساب (provider.suspend)</option>
-              <option value="provider.reactivate">إعادة تفعيل (provider.reactivate)</option>
-              <option value="provider.limits_update">تعديل الحدود (provider.limits_update)</option>
-              <option value="provider.notes_update">ملاحظات الإدارة (provider.notes_update)</option>
-              <option value="subscription.create">تسجيل اشتراك (subscription.create)</option>
-              <option value="subscription.cancel">إلغاء اشتراك (subscription.cancel)</option>
-              <option value="category.create">إنشاء فئة (category.create)</option>
-              <option value="category.update">تعديل فئة (category.update)</option>
-              <option value="category.reorder">إعادة ترتيب فئة (category.reorder)</option>
-              <option value="category.toggle">تفعيل/تعطيل فئة (category.toggle)</option>
-              <option value="category.delete">حذف فئة (category.delete)</option>
-              <option value="account.create">إنشاء حساب (account.create)</option>
-              <option value="account.reset_password">إعادة تعيين كلمة مرور (account.reset_password)</option>
-              <option value="account.toggle_active">تعطيل/تفعيل حساب (account.toggle_active)</option>
+              <option value="PROVIDER_">عمليات مقدمي الخدمة (PROVIDER_*)</option>
+              <option value="SUBSCRIPTION_">عمليات الاشتراكات (SUBSCRIPTION_*)</option>
+              <option value="CATEGORY_">عمليات الفئات (CATEGORY_*)</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-text mb-1">
+            <label className="mb-1 block text-xs font-medium text-text">
               مقدم الخدمة
             </label>
             <select
               name="providerId"
               defaultValue={providerId}
-              className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-text focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-11 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-xs text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">كل المقدمين</option>
               {providersList.map((p) => (
@@ -134,39 +178,42 @@ export default async function AdminAuditLogPage(props: {
           </div>
 
           <div className="flex items-end gap-2">
-            <button
+            <Button
               type="submit"
-              className="w-full rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accent-hover cursor-pointer"
+              variant="primary"
+              className="flex-1"
             >
               تصفية السجل
-            </button>
-            <Link
-              href="/admin/audit-log"
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-text-muted hover:bg-surface-muted"
+            </Button>
+            <Button
+              asChild
+              variant="secondary"
             >
-              إلغاء
-            </Link>
+              <Link href="/admin/audit-log">
+                إلغاء
+              </Link>
+            </Button>
           </div>
         </form>
-      </AdminCard>
+      </Card>
 
       {/* Mobile View (Cards) */}
-      <div className="space-y-3 md:hidden">
+      <MobileCardList>
         {logs.length === 0 ? (
-          <AdminCard className="p-6 text-center text-xs text-text-muted">
+          <Card className="p-6 text-center text-xs text-text-muted">
             لا توجد سجلات مطابقة للشروط.
-          </AdminCard>
+          </Card>
         ) : (
           logs.map((log) => (
-            <AdminCard key={log.id} className="p-4 space-y-2 text-xs">
+            <MobileCardItem key={log.id}>
               <div className="flex items-start justify-between gap-2">
-                <span className="font-bold text-text">{formatActionLabel(log.action)}</span>
-                <span className="text-[11px] text-text-muted">
+                <span className="font-semibold text-text">{formatActionLabel(log.action)}</span>
+                <span className="text-[11px] text-text-muted font-latin">
                   {formatDateWithTime(log.createdAt)}
                 </span>
               </div>
 
-              <div className="text-text-muted space-y-1 border-y border-border py-2">
+              <div className="text-text-muted space-y-1 border-y border-border py-2 text-xs">
                 <div>
                   المسؤول: <strong className="text-text">{log.admin.name}</strong> ({log.admin.email})
                 </div>
@@ -175,7 +222,7 @@ export default async function AdminAuditLogPage(props: {
                     مقدم الخدمة:{" "}
                     <Link
                       href={`/admin/providers/${log.provider.id}`}
-                      className="font-semibold text-accent hover:underline"
+                      className="font-semibold text-accent-text hover:underline"
                     >
                       {log.provider.name}
                     </Link>
@@ -189,99 +236,99 @@ export default async function AdminAuditLogPage(props: {
               {log.details && (
                 <pre
                   dir="ltr"
-                  className="rounded bg-surface-muted p-2 font-mono text-[10px] text-text overflow-x-auto whitespace-pre-wrap break-all"
+                  className="rounded-[2px] bg-surface-muted p-2 font-mono text-[10px] text-text overflow-x-auto whitespace-pre-wrap break-all"
                 >
                   {typeof log.details === "string"
                     ? log.details
                     : JSON.stringify(log.details, null, 2)}
                 </pre>
               )}
-            </AdminCard>
+            </MobileCardItem>
           ))
         )}
-      </div>
+      </MobileCardList>
 
       {/* Desktop Table View */}
       <div className="hidden md:block">
-        <AdminTable>
-          <AdminTableHead>
-            <tr>
-              <AdminTh>التاريخ والوقت</AdminTh>
-              <AdminTh>المسؤول</AdminTh>
-              <AdminTh>الإجراء</AdminTh>
-              <AdminTh>الكيان</AdminTh>
-              <AdminTh>مقدم الخدمة</AdminTh>
-              <AdminTh>التفاصيل</AdminTh>
-            </tr>
-          </AdminTableHead>
-          <AdminTableBody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>التاريخ والوقت</TableHead>
+              <TableHead>المسؤول</TableHead>
+              <TableHead>الإجراء</TableHead>
+              <TableHead>الكيان</TableHead>
+              <TableHead>مقدم الخدمة</TableHead>
+              <TableHead>التفاصيل</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {logs.length === 0 ? (
-              <tr>
-                <AdminTd colSpan={6} className="py-8 text-center text-xs text-text-muted">
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-xs text-text-muted">
                   لا توجد سجلات مطابقة للشروط.
-                </AdminTd>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               logs.map((log) => (
-                <tr key={log.id} className="hover:bg-surface-muted/50 align-top">
-                  <AdminTd className="text-xs whitespace-nowrap text-text-muted">
+                <TableRow key={log.id} className="align-top">
+                  <TableCell className="text-xs whitespace-nowrap text-text-muted font-latin">
                     {formatDateWithTime(log.createdAt)}
-                  </AdminTd>
-                  <AdminTd className="text-xs whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">
                     <p className="font-semibold text-text">{log.admin.name}</p>
-                    <p className="text-[10px] text-text-muted" dir="ltr">
+                    <p className="text-[10px] text-text-muted font-latin" dir="ltr">
                       {log.admin.email}
                     </p>
-                  </AdminTd>
-                  <AdminTd className="whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <span className="font-mono text-xs font-semibold text-text">
                       {log.action}
                     </span>
                     <p className="text-[10px] text-text-muted">
                       {formatActionLabel(log.action)}
                     </p>
-                  </AdminTd>
-                  <AdminTd className="text-xs text-text-muted whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="text-xs text-text-muted whitespace-nowrap">
                     <span className="font-mono">{log.entityType}</span>
                     <p className="text-[10px] font-mono truncate max-w-[120px]" dir="ltr">
                       {log.entityId}
                     </p>
-                  </AdminTd>
-                  <AdminTd className="text-xs">
+                  </TableCell>
+                  <TableCell className="text-xs">
                     {log.provider ? (
                       <Link
                         href={`/admin/providers/${log.provider.id}`}
-                        className="font-medium text-accent hover:underline"
+                        className="font-semibold text-accent-text hover:underline"
                       >
                         {log.provider.name}
                       </Link>
                     ) : (
                       <span className="text-text-muted">-</span>
                     )}
-                  </AdminTd>
-                  <AdminTd className="max-w-xs">
+                  </TableCell>
+                  <TableCell className="max-w-md">
                     {log.details ? (
                       <pre
                         dir="ltr"
-                        className="rounded bg-surface-muted p-1.5 font-mono text-[10px] text-text overflow-x-auto whitespace-pre-wrap break-all max-h-24"
+                        className="max-h-24 overflow-auto rounded-[2px] bg-surface-muted p-2 font-mono text-[10px] text-text leading-tight"
                       >
                         {typeof log.details === "string"
                           ? log.details
-                          : JSON.stringify(log.details)}
+                          : JSON.stringify(log.details, null, 2)}
                       </pre>
                     ) : (
                       <span className="text-text-muted">-</span>
                     )}
-                  </AdminTd>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </AdminTableBody>
-        </AdminTable>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}
-      <AdminPagination
+      <DataPagination
         currentPage={currentPage}
         totalPages={totalPages}
         totalItems={totalItems}
@@ -289,43 +336,4 @@ export default async function AdminAuditLogPage(props: {
       />
     </div>
   );
-}
-
-function formatDateWithTime(date: Date) {
-  const cairoStr = toCairoDateString(date);
-  const arabicDate = formatArabicDateString(cairoStr);
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Africa/Cairo",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).formatToParts(date);
-
-  const hour = parts.find((p) => p.type === "hour")?.value || "";
-  const minute = parts.find((p) => p.type === "minute")?.value || "";
-  const dayPeriod = parts.find((p) => p.type === "dayPeriod")?.value || "";
-  const arabicPeriod = dayPeriod.toLowerCase() === "pm" ? "م" : "ص";
-
-  return `${arabicDate} - ${hour}:${minute} ${arabicPeriod}`;
-}
-
-function formatActionLabel(action: string) {
-  const map: Record<string, string> = {
-    "provider.approve": "اعتماد الملف",
-    "provider.suspend": "إيقاف الحساب",
-    "provider.reactivate": "إعادة التفعيل",
-    "provider.limits_update": "تعديل الحدود",
-    "provider.notes_update": "تحديث ملاحظات الإدارة",
-    "subscription.create": "تسجيل اشتراك",
-    "subscription.cancel": "إلغاء اشتراك",
-    "category.create": "إنشاء فئة جديدة",
-    "category.update": "تعديل اسم الفئة",
-    "category.reorder": "إعادة ترتيب الفئات",
-    "category.toggle": "تغيير تفعيل الفئة",
-    "category.delete": "حذف فئة",
-    "account.create": "إنشاء حساب مقدم",
-    "account.reset_password": "تعيين كلمة المرور",
-    "account.toggle_active": "تغيير حالة الحساب",
-  };
-  return map[action] || action;
 }

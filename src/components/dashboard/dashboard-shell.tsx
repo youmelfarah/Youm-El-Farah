@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  House,
+  User,
+  Tag,
+  Image as ImageIcon,
+  CalendarBlank,
+  WarningCircle,
+  XCircle,
+} from "@phosphor-icons/react";
 import { LogoutButton } from "@/components/logout-button";
+import { Logo } from "@/components/brand/Logo";
+import { cn } from "@/lib/cn";
 
 interface DashboardShellProps {
   providerName?: string | null;
@@ -12,11 +23,11 @@ interface DashboardShellProps {
 }
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "الرئيسية", shortLabel: "الرئيسية" },
-  { href: "/dashboard/profile", label: "الملف الشخصي", shortLabel: "الملف" },
-  { href: "/dashboard/offers", label: "العروض", shortLabel: "العروض" },
-  { href: "/dashboard/gallery", label: "المعرض", shortLabel: "المعرض" },
-  { href: "/dashboard/availability", label: "المواعيد", shortLabel: "المواعيد" },
+  { href: "/dashboard", label: "الرئيسية", shortLabel: "الرئيسية", icon: House },
+  { href: "/dashboard/profile", label: "الملف التعريفي", shortLabel: "الملف", icon: User },
+  { href: "/dashboard/offers", label: "العروض والباقات", shortLabel: "العروض", icon: Tag },
+  { href: "/dashboard/gallery", label: "معرض الصور", shortLabel: "المعرض", icon: ImageIcon },
+  { href: "/dashboard/availability", label: "جدول المواعيد", shortLabel: "المواعيد", icon: CalendarBlank },
 ] as const;
 
 export function DashboardShell({
@@ -34,37 +45,45 @@ export function DashboardShell({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
-          <div className="min-w-0">
-            <Link href="/dashboard" className="block truncate text-base font-bold text-gray-900">
-              {providerName || "يوم الفرح - لوحة مقدم الخدمة"}
-            </Link>
-            <p className="truncate text-xs text-gray-500">{userName}</p>
+    <div className="min-h-screen bg-surface text-text">
+      {/* Top Header */}
+      <header className="sticky top-0 z-30 border-b border-border bg-surface-raised">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Logo href="/dashboard" variant="mark-less" size="sm" />
+            <div className="min-w-0 border-s border-border ps-3">
+              <span className="block truncate font-display text-sm font-semibold text-text">
+                {providerName || "لوحة شريك يوم الفرح"}
+              </span>
+              <p className="truncate text-[11px] text-text-muted">{userName}</p>
+            </div>
           </div>
-          <LogoutButton className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50" />
+          <LogoutButton className="shrink-0" />
         </div>
 
+        {/* Desktop Navigation Tabs */}
         {hasProvider && (
           <nav
             aria-label="أقسام لوحة التحكم"
-            className="hidden border-t border-gray-100 bg-white md:block"
+            className="hidden border-t border-border/60 bg-surface-raised md:block"
           >
-            <div className="mx-auto flex max-w-4xl gap-1 px-4">
+            <div className="mx-auto flex max-w-5xl gap-1 px-5">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
+                const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`border-b-2 px-4 py-2.5 text-sm font-medium transition ${
+                    className={cn(
+                      "flex min-h-[44px] items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors",
                       active
-                        ? "border-blue-600 text-blue-600"
-                        : "border-transparent text-gray-600 hover:text-gray-900"
-                    }`}
+                        ? "border-text text-text font-semibold"
+                        : "border-transparent text-text-muted hover:text-text"
+                    )}
                   >
-                    {item.label}
+                    <Icon className="h-4 w-4" weight={active ? "bold" : "light"} />
+                    <span>{item.label}</span>
                   </Link>
                 );
               })}
@@ -73,44 +92,63 @@ export function DashboardShell({
         )}
       </header>
 
-      <div className={`mx-auto max-w-4xl px-4 py-4 ${hasProvider ? "pb-24 md:pb-8" : "pb-8"}`}>
+      {/* Main Content Area */}
+      <div className={`mx-auto max-w-5xl px-5 py-6 ${hasProvider ? "pb-24 md:pb-12" : "pb-12"}`}>
         {providerStatus === "PENDING" && (
           <div
             role="status"
-            className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900"
+            className="mb-6 flex items-start gap-3 rounded-[4px] border border-warning/40 bg-warning-muted p-4 text-xs font-medium text-text leading-relaxed"
           >
-            حسابك قيد المراجعة — يمكنك تعديل بياناتك وإضافة عروضك وصورك الآن، وسيظهر ملفك للزوار بعد الموافقة وتفعيل الاشتراك.
+            <WarningCircle className="h-5 w-5 shrink-0 text-warning mt-0.5" weight="bold" />
+            <div>
+              <strong className="block text-text font-semibold mb-0.5">
+                حسابك قيد المراجعة والاعتماد
+              </strong>
+              يمكنك تعديل بياناتك وإضافة عروضك وصورك الآن، وسيظهر ملفك للزوار بعد الموافقة وتفعيل الاشتراك.
+            </div>
           </div>
         )}
 
         {providerStatus === "SUSPENDED" && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900"
+            className="mb-6 flex items-start gap-3 rounded-[4px] border border-danger/40 bg-danger-muted p-4 text-xs font-semibold text-danger leading-relaxed"
           >
-            تم إيقاف حسابك، تواصل مع الإدارة
+            <XCircle className="h-5 w-5 shrink-0 text-danger mt-0.5" weight="bold" />
+            <div>
+              <strong className="block font-semibold mb-0.5">
+                تم إيقاف حسابك مؤقتاً
+              </strong>
+              يرجى التواصل مع إدارة المنصة لتسوية حالة الحساب وتفعيله مجدداً.
+            </div>
           </div>
         )}
 
         <main>{children}</main>
       </div>
 
+      {/* Mobile Bottom Navigation (44px min targets) */}
       {hasProvider && (
         <nav
-          aria-label="التنقل السفلي"
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white md:hidden"
+          aria-label="التنقل السفلي للجوال"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface-raised md:hidden"
         >
           <div className="grid grid-cols-5">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
+              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex flex-col items-center justify-center py-2.5 text-xs font-medium transition ${
-                    active ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={cn(
+                    "flex min-h-[52px] flex-col items-center justify-center gap-1 py-1 text-[10px] font-medium transition-colors",
+                    active
+                      ? "text-text font-semibold bg-surface-muted"
+                      : "text-text-muted hover:text-text"
+                  )}
                 >
+                  <Icon className="h-5 w-5" weight={active ? "bold" : "light"} />
                   <span>{item.shortLabel}</span>
                 </Link>
               );
@@ -121,4 +159,3 @@ export function DashboardShell({
     </div>
   );
 }
-

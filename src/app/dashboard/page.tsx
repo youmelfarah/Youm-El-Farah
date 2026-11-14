@@ -1,29 +1,15 @@
 import Link from "next/link";
+import { CheckCircle, Circle, ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { prisma } from "@/lib/prisma";
 import { requireProviderPage } from "@/lib/provider-dashboard";
 import { getProviderLimits } from "@/lib/limits";
 import { DISTRICT_LABELS } from "@/lib/districts";
 import { OnboardingForm } from "./onboarding-form";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_BADGE: Record<
-  "PENDING" | "APPROVED" | "SUSPENDED",
-  { label: string; className: string }
-> = {
-  PENDING: {
-    label: "قيد المراجعة",
-    className: "bg-amber-100 text-amber-800 border-amber-200",
-  },
-  APPROVED: {
-    label: "معتمد",
-    className: "bg-green-100 text-green-800 border-green-200",
-  },
-  SUSPENDED: {
-    label: "موقوف",
-    className: "bg-red-100 text-red-800 border-red-200",
-  },
-};
 
 export default async function DashboardPage() {
   const session = await requireProviderPage();
@@ -68,22 +54,21 @@ export default async function DashboardPage() {
     ]);
 
   const limits = getProviderLimits(provider);
-  const badge = STATUS_BADGE[provider.status];
   const isVisible =
     provider.status === "APPROVED" && Boolean(activeSubscription);
 
   let visibilityMessage: string;
   if (isVisible) {
-    visibilityMessage = "ملفك ظاهر حالياً للزوار في نتائج البحث.";
+    visibilityMessage = "ملفك ظاهر حالياً للزوار في نتائج البحث ودليل الخدمات.";
   } else if (provider.status === "SUSPENDED") {
     visibilityMessage =
-      "ملفك غير ظاهر للزوار لأن الحساب موقوف. تواصل مع الإدارة.";
+      "ملفك غير ظاهر للزوار لأن الحساب موقوف. يرجى التواصل مع الإدارة.";
   } else if (provider.status === "PENDING" && !activeSubscription) {
     visibilityMessage =
       "ملفك غير ظاهر للزوار لأن حسابك قيد المراجعة ولا يوجد اشتراك فعّال حالياً.";
   } else if (provider.status === "PENDING") {
     visibilityMessage =
-      "ملفك غير ظاهر للزوار لأن حسابك لا يزال قيد المراجعة من الإدارة.";
+      "ملفك غير ظاهر للزوار لأن حسابك لا يزال قيد المراجعة والاعتماد من الإدارة.";
   } else {
     visibilityMessage =
       "ملفك غير ظاهر للزوار لعدم وجود اشتراك فعّال حالياً.";
@@ -91,12 +76,12 @@ export default async function DashboardPage() {
 
   const checklistItems = [
     {
-      label: "اسم النشاط",
+      label: "اسم النشاط التجاري",
       done: Boolean(provider.name.trim()),
       href: "/dashboard/profile",
     },
     {
-      label: "النبذة التعريفية",
+      label: "النبذة التعريفية للخدمات",
       done: Boolean(provider.bio && provider.bio.trim().length > 0),
       href: "/dashboard/profile",
     },
@@ -116,7 +101,7 @@ export default async function DashboardPage() {
       href: "/dashboard/profile",
     },
     {
-      label: "صورة الشعار",
+      label: "صورة الشعار أو الغلاف",
       done: Boolean(provider.logoUrl),
       href: "/dashboard/profile",
     },
@@ -126,7 +111,7 @@ export default async function DashboardPage() {
       href: "/dashboard/gallery",
     },
     {
-      label: "عرض واحد على الأقل",
+      label: "عرض أو باقة واحدة على الأقل",
       done: offerCount >= 1,
       href: "/dashboard/offers",
     },
@@ -135,144 +120,163 @@ export default async function DashboardPage() {
   const completedCount = checklistItems.filter((item) => item.done).length;
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">{provider.name}</h1>
-            <p className="text-xs text-gray-500">
-              {DISTRICT_LABELS[provider.district]} •{" "}
-              <span dir="ltr" className="font-mono">
-                {provider.slug}
-              </span>
-            </p>
-          </div>
-          <span
-            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${badge.className}`}
-          >
-            {badge.label}
-          </span>
-        </div>
-
-        <div
-          className={`mt-4 rounded-lg border p-3 text-sm ${
-            isVisible
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-gray-200 bg-gray-50 text-gray-700"
-          }`}
-        >
-          <p className="font-semibold">
-            {isVisible ? "الحالة على الموقع: ظاهر للزوار" : "الحالة على الموقع: غير ظاهر"}
-          </p>
-          <p className="mt-1 text-xs">{visibilityMessage}</p>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-bold text-gray-900">حالة الاشتراك</h2>
-        {activeSubscription ? (
-          <div className="mt-2 space-y-1 text-sm text-gray-700">
-            <p>
-              الاشتراك فعّال حتى:{" "}
-              <span className="font-semibold text-green-700">
-                {activeSubscription.endsAt.toLocaleDateString("ar-EG", {
-                  timeZone: "Africa/Cairo",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-            </p>
-            {activeSubscription.planName && (
-              <p className="text-xs text-gray-500">
-                الباقة: {activeSubscription.planName}
+    <div className="space-y-6">
+      {/* Provider Header Card */}
+      <Card>
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="font-display text-2xl font-bold text-text sm:text-3xl">
+                {provider.name}
+              </h1>
+              <p className="mt-1 text-xs text-text-muted">
+                {DISTRICT_LABELS[provider.district]} •{" "}
+                <span dir="ltr" className="font-mono font-latin">
+                  {provider.slug}
+                </span>
               </p>
-            )}
+            </div>
+            {provider.status === "APPROVED" && <Badge variant="success">معتمد</Badge>}
+            {provider.status === "PENDING" && <Badge variant="warning">قيد المراجعة</Badge>}
+            {provider.status === "SUSPENDED" && <Badge variant="danger">موقوف</Badge>}
           </div>
-        ) : (
-          <p className="mt-2 text-sm font-medium text-gray-600">
-            لا يوجد اشتراك فعّال
-          </p>
-        )}
-      </section>
 
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-bold text-gray-900">الاستخدام والحدود المتاحة</h2>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Link
-            href="/dashboard/offers"
-            className="rounded-lg border border-gray-200 p-3 transition hover:border-blue-300 hover:bg-blue-50/40"
+          <div
+            className={`mt-5 rounded-[4px] border p-4 text-xs ${
+              isVisible
+                ? "border-success/30 bg-success-muted text-success"
+                : "border-border bg-surface-muted text-text-muted"
+            }`}
           >
-            <p className="text-xs text-gray-500">العروض</p>
-            <p className="mt-1 text-base font-bold text-gray-900">
-              استخدمت {offerCount} من {limits.offers}
+            <p className="font-semibold text-text">
+              {isVisible ? "الحالة على المنصة: ظاهر للزوار" : "الحالة على المنصة: غير ظاهر للعامة"}
             </p>
-          </Link>
-          <Link
-            href="/dashboard/gallery"
-            className="rounded-lg border border-gray-200 p-3 transition hover:border-blue-300 hover:bg-blue-50/40"
-          >
-            <p className="text-xs text-gray-500">الصور</p>
-            <p className="mt-1 text-base font-bold text-gray-900">
-              استخدمت {imageCount} من {limits.images}
-            </p>
-          </Link>
-          <Link
-            href="/dashboard/gallery"
-            className="rounded-lg border border-gray-200 p-3 transition hover:border-blue-300 hover:bg-blue-50/40"
-          >
-            <p className="text-xs text-gray-500">الفيديوهات</p>
-            <p className="mt-1 text-base font-bold text-gray-900">
-              استخدمت {videoCount} من {limits.videos}
-            </p>
-          </Link>
-        </div>
-      </section>
+            <p className="mt-1 leading-relaxed">{visibilityMessage}</p>
+          </div>
+        </CardContent>
+      </Card>
 
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-bold text-gray-900">اكتمال الملف الشخصي</h2>
-          <span className="text-xs font-semibold text-gray-600">
-            {completedCount} من {checklistItems.length}
-          </span>
-        </div>
-        <p className="mt-1 text-xs text-gray-500">
-          قائمة إرشادية لمساعدتك على تجهيز ملف جذاب للزوار.
-        </p>
-
-        <ul className="mt-3 divide-y divide-gray-100">
-          {checklistItems.map((item) => (
-            <li
-              key={item.label}
-              className="flex items-center justify-between gap-2 py-2.5 text-sm"
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
-                    item.done
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-400"
-                  }`}
-                >
-                  {item.done ? "✓" : "○"}
-                </span>
-                <span className={item.done ? "text-gray-700" : "font-medium text-gray-900"}>
-                  {item.label}
-                </span>
-              </div>
-              {!item.done && (
-                <Link
-                  href={item.href}
-                  className="text-xs font-medium text-blue-600 hover:underline"
-                >
-                  إكمال
-                </Link>
+      {/* Subscription Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>حالة الاشتراك والباقة</CardTitle>
+          <CardDescription>متابعة فترة التغطية وتاريخ التجديد</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {activeSubscription ? (
+            <div className="space-y-1.5 text-xs text-text">
+              <p>
+                الاشتراك فعّال حتى:{" "}
+                <strong className="font-latin text-sm text-text">
+                  {activeSubscription.endsAt.toLocaleDateString("en-US", {
+                    timeZone: "Africa/Cairo",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </strong>
+              </p>
+              {activeSubscription.planName && (
+                <p className="text-text-muted">
+                  الباقة المسجلة: {activeSubscription.planName}
+                </p>
               )}
-            </li>
-          ))}
-        </ul>
-      </section>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p className="text-xs text-text-muted font-medium">
+                لا يوجد اشتراك فعّال حالياً يغطي هذا النشاط.
+              </p>
+              <Badge variant="warning" size="sm">
+                غير مشترك
+              </Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Usage & Limits */}
+      <Card>
+        <CardHeader>
+          <CardTitle>الاستخدام والحدود المتاحة</CardTitle>
+          <CardDescription>السعة المسموحة حسب باقة الاشتراك الحالية</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Link
+              href="/dashboard/offers"
+              className="rounded-[4px] border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong hover:bg-surface-muted"
+            >
+              <span className="text-xs text-text-muted">العروض والباقات</span>
+              <p className="mt-1 font-latin text-lg font-semibold text-text">
+                {offerCount} / {limits.offers}
+              </p>
+            </Link>
+            <Link
+              href="/dashboard/gallery"
+              className="rounded-[4px] border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong hover:bg-surface-muted"
+            >
+              <span className="text-xs text-text-muted">معرض الصور</span>
+              <p className="mt-1 font-latin text-lg font-semibold text-text">
+                {imageCount} / {limits.images}
+              </p>
+            </Link>
+            <Link
+              href="/dashboard/gallery"
+              className="rounded-[4px] border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong hover:bg-surface-muted"
+            >
+              <span className="text-xs text-text-muted">مقاطع الفيديو</span>
+              <p className="mt-1 font-latin text-lg font-semibold text-text">
+                {videoCount} / {limits.videos}
+              </p>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Profile Completion Checklist */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>اكتمال الملف التعريفي</CardTitle>
+            <span className="font-latin text-xs font-semibold text-text">
+              {completedCount} / {checklistItems.length}
+            </span>
+          </div>
+          <CardDescription>
+            قائمة إرشادية لمساعدتكِ على تجهيز ملف جذاب وجاهز للزوار.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="divide-y divide-border/60">
+            {checklistItems.map((item) => (
+              <li
+                key={item.label}
+                className="flex items-center justify-between gap-3 py-3 text-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  {item.done ? (
+                    <CheckCircle className="h-4 w-4 text-success shrink-0" weight="fill" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-text-muted/40 shrink-0" weight="regular" />
+                  )}
+                  <span className={item.done ? "text-text" : "font-medium text-text-muted"}>
+                    {item.label}
+                  </span>
+                </div>
+                {!item.done && (
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={item.href} className="inline-flex items-center gap-1 text-accent-text">
+                      <span>إكمال</span>
+                      <ArrowLeft className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }

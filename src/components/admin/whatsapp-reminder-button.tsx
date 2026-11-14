@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { WhatsappLogo, Copy, Check } from "@phosphor-icons/react";
 import {
   buildWhatsAppUrl,
   formatWhatsAppReminder,
 } from "@/lib/whatsapp-templates";
+import { Button } from "@/components/ui/button";
 
 export interface WhatsAppReminderButtonProps {
   phoneOrWhatsapp: string | null;
@@ -55,36 +57,46 @@ export function WhatsAppReminderButton({
           href={waUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex items-center justify-center gap-1 rounded-lg border border-success bg-success-muted font-medium text-success transition hover:bg-success hover:text-white ${
-            variant === "sm" ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"
+          className={`inline-flex items-center justify-center gap-1.5 rounded-[4px] border border-success/40 bg-success-muted font-medium text-success transition hover:bg-success hover:text-text-inverse focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            variant === "sm" ? "h-8 px-2.5 text-xs" : "h-10 px-3.5 text-sm"
           }`}
           title="إرسال تذكير عبر واتساب"
         >
-          <span>💬</span>
+          <WhatsappLogo className="h-4 w-4" weight="regular" />
           <span>تذكير واتساب</span>
         </a>
       ) : (
         <span
-          className={`inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-surface-muted font-medium text-text-muted opacity-50 ${
-            variant === "sm" ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"
+          className={`inline-flex items-center justify-center gap-1.5 rounded-[4px] border border-border bg-surface-muted font-medium text-text-muted opacity-50 ${
+            variant === "sm" ? "h-8 px-2.5 text-xs" : "h-10 px-3.5 text-sm"
           }`}
           title="لا يوجد رقم هاتف أو واتساب مسجل"
         >
-          <span>💬</span>
+          <WhatsappLogo className="h-4 w-4" weight="regular" />
           <span>لا يوجد رقم</span>
         </span>
       )}
 
-      <button
+      <Button
         type="button"
+        variant="secondary"
+        size={variant === "sm" ? "sm" : "md"}
         onClick={handleCopy}
-        className={`inline-flex items-center justify-center rounded-lg border border-border bg-surface font-medium text-text-muted transition hover:bg-surface-muted hover:text-text cursor-pointer ${
-          variant === "sm" ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-xs"
-        }`}
+        className={variant === "sm" ? "h-8 px-2.5 text-xs" : "h-10 px-3 text-xs"}
         title="نسخ نص الرسالة للحافظة"
       >
-        {copied ? "تم النسخ ✓" : "نسخ الرسالة"}
-      </button>
+        {copied ? (
+          <>
+            <Check className="h-3.5 w-3.5 text-success" weight="bold" />
+            <span>تم النسخ</span>
+          </>
+        ) : (
+          <>
+            <Copy className="h-3.5 w-3.5 text-text-muted" weight="light" />
+            <span>نسخ الرسالة</span>
+          </>
+        )}
+      </Button>
     </div>
   );
 }

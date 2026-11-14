@@ -3,21 +3,34 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import {
+  List,
+  X,
+  House,
+  Users,
+  CreditCard,
+  Tag,
+  UserGear,
+  ClockCounterClockwise,
+} from "@phosphor-icons/react";
 import { LogoutButton } from "@/components/logout-button";
+import { Logo } from "@/components/brand/Logo";
+import { cn } from "@/lib/cn";
 
 interface NavItem {
   href: string;
   label: string;
+  icon: React.ElementType;
   exact?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "نظرة عامة", exact: true },
-  { href: "/admin/providers", label: "مقدمو الخدمة" },
-  { href: "/admin/subscriptions", label: "الاشتراكات" },
-  { href: "/admin/categories", label: "الفئات" },
-  { href: "/admin/provider-accounts", label: "حسابات المقدمين" },
-  { href: "/admin/audit-log", label: "سجل النشاط" },
+  { href: "/admin", label: "نظرة عامة", icon: House, exact: true },
+  { href: "/admin/providers", label: "مقدمو الخدمة", icon: Users },
+  { href: "/admin/subscriptions", label: "الاشتراكات", icon: CreditCard },
+  { href: "/admin/categories", label: "الفئات", icon: Tag },
+  { href: "/admin/provider-accounts", label: "حسابات المقدمين", icon: UserGear },
+  { href: "/admin/audit-log", label: "سجل النشاط", icon: ClockCounterClockwise },
 ];
 
 export function AdminNav({
@@ -38,60 +51,46 @@ export function AdminNav({
   return (
     <>
       {/* Mobile Top Header */}
-      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-surface px-4 md:hidden">
-        <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-surface-raised px-4 md:hidden">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg border border-border p-2 text-text transition hover:bg-surface-muted cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-[4px] border border-border text-text transition hover:bg-surface-muted cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="القائمة الرئيسية"
           >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" weight="bold" />
+            ) : (
+              <List className="h-5 w-5" weight="light" />
+            )}
           </button>
-          <span className="font-bold text-text">لوحة إدارة يوم الفرح</span>
+          <Logo variant="mark-less" size="sm" />
         </div>
         <div className="text-xs text-text-muted">{user.name}</div>
       </header>
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 top-16 z-20 flex flex-col border-b border-border bg-surface p-4 shadow-lg md:hidden">
+        <div className="fixed inset-0 top-16 z-20 flex flex-col border-b border-border bg-surface-raised p-4 shadow-popover md:hidden">
           <nav className="flex flex-col gap-1.5">
             {NAV_ITEMS.map((item) => {
               const active = isItemActive(item);
+              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  className={cn(
+                    "flex min-h-[44px] items-center gap-3 rounded-[4px] px-3.5 py-2.5 text-sm font-medium transition-colors",
                     active
-                      ? "bg-accent text-white"
+                      ? "bg-text text-text-inverse"
                       : "text-text hover:bg-surface-muted"
-                  }`}
+                  )}
                 >
-                  {item.label}
+                  <Icon className="h-4 w-4 shrink-0" weight={active ? "bold" : "light"} />
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
@@ -100,37 +99,37 @@ export function AdminNav({
             <div className="mb-2 text-xs text-text-muted">
               مسجل باسم: <span className="font-semibold text-text">{user.email}</span>
             </div>
-            <LogoutButton />
+            <LogoutButton className="w-full" />
           </div>
         </div>
       )}
 
-      {/* Desktop Sidebar (RTL: on the right) */}
-      <aside className="hidden h-screen w-64 shrink-0 flex-col border-l border-border bg-surface p-4 md:flex">
-        <div className="mb-6 flex items-center gap-2 border-b border-border pb-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-base font-bold text-white">
-            ف
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-text">لوحة الإدارة</h1>
-            <p className="text-xs text-text-muted">منصة يوم الفرح</p>
-          </div>
+      {/* Desktop Sidebar (RTL: on the start/right) */}
+      <aside className="hidden h-screen w-64 shrink-0 flex-col border-e border-border bg-surface-raised p-5 md:flex">
+        <div className="mb-6 flex flex-col gap-1 border-b border-border pb-5">
+          <Logo href="/" variant="stacked" size="sm" />
+          <span className="font-latin text-[10px] uppercase tracking-widest text-accent-text mt-1">
+            ADMINISTRATION CONSOLE
+          </span>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const active = isItemActive(item);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                className={cn(
+                  "flex min-h-[44px] items-center gap-3 rounded-[4px] px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active
-                    ? "bg-accent text-white"
+                    ? "bg-text text-text-inverse"
                     : "text-text hover:bg-surface-muted"
-                }`}
+                )}
               >
-                {item.label}
+                <Icon className="h-4 w-4 shrink-0" weight={active ? "bold" : "light"} />
+                <span>{item.label}</span>
               </Link>
             );
           })}
@@ -139,11 +138,11 @@ export function AdminNav({
         <div className="mt-auto border-t border-border pt-4">
           <div className="mb-3">
             <p className="text-xs font-semibold text-text">{user.name}</p>
-            <p className="text-xs text-text-muted truncate" dir="ltr">
+            <p className="text-xs text-text-muted truncate font-latin" dir="ltr">
               {user.email}
             </p>
           </div>
-          <LogoutButton />
+          <LogoutButton className="w-full" />
         </div>
       </aside>
     </>

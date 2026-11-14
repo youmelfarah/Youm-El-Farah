@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AdminButton } from "@/components/admin/button";
-import { AdminCard, AdminCardHeader } from "@/components/admin/card";
-import { AdminInput, AdminSelect, AdminTextarea } from "@/components/admin/input";
-import { AdminBadge } from "@/components/admin/badge";
-import { AdminTable, AdminTableBody, AdminTableHead, AdminTd, AdminTh } from "@/components/admin/table";
+import { AdminButton } from "@/components/ui/button";
+import { AdminCard, AdminCardHeader } from "@/components/ui/card";
+import { AdminInput, AdminSelect, AdminTextarea } from "@/components/ui/input";
+import { AdminBadge } from "@/components/ui/badge";
+import { AdminTable, AdminTableBody, AdminTableHead, AdminTd, AdminTh } from "@/components/ui/table";
 import { WhatsAppReminderButton } from "@/components/admin/whatsapp-reminder-button";
 import { ABSOLUTE_MAX, DEFAULT_LIMITS } from "@/lib/limits";
 import { formatArabicDateString } from "@/lib/calendar-dates";

@@ -10,10 +10,16 @@ import {
 } from "@/lib/cairo-time";
 import { formatArabicDateString } from "@/lib/calendar-dates";
 import { getSubscriptionState, SubscriptionState } from "@/lib/subscription";
-import { AdminCard } from "@/components/admin/card";
-import { AdminBadge } from "@/components/admin/badge";
-import { AdminTable, AdminTableBody, AdminTableHead, AdminTd, AdminTh } from "@/components/admin/table";
-import { AdminPagination } from "@/components/admin/pagination";
+import { Card as AdminCard } from "@/components/ui/card";
+import { Badge as AdminBadge } from "@/components/ui/badge";
+import {
+  Table as AdminTable,
+  TableBody as AdminTableBody,
+  TableHeader as AdminTableHead,
+  TableCell as AdminTd,
+  TableHead as AdminTh,
+} from "@/components/ui/table";
+import { DataPagination as AdminPagination } from "@/components/ui/pagination";
 import { WhatsAppReminderButton } from "@/components/admin/whatsapp-reminder-button";
 import { PaymentMethod, Prisma } from "@prisma/client";
 

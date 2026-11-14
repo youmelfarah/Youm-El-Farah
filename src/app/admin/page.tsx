@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { WarningCircle, ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { AuthError, requireRole } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import {
@@ -12,8 +13,9 @@ import {
 import { formatArabicDateString } from "@/lib/calendar-dates";
 import { DISTRICT_LABELS } from "@/lib/districts";
 import { getSubscriptionState } from "@/lib/subscription";
-import { AdminCard, AdminCardHeader } from "@/components/admin/card";
-import { AdminBadge } from "@/components/admin/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -162,7 +164,7 @@ export default async function AdminDashboardOverviewPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-text sm:text-2xl">نظرة عامة</h1>
+        <h1 className="font-display text-2xl font-bold text-text sm:text-3xl">نظرة عامة</h1>
         <p className="mt-1 text-xs text-text-muted">
           إحصائيات المنصة، حالة مقدمي الخدمة والاشتراكات، ومتابعة الإيرادات.
         </p>
@@ -170,11 +172,11 @@ export default async function AdminDashboardOverviewPage() {
 
       {/* Warning Alert if approved providers have no active sub */}
       {approvedWithoutSubCount > 0 && (
-        <div className="flex items-center justify-between rounded-xl border border-warning bg-warning-muted p-4 text-warning">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[4px] border border-warning/40 bg-warning-muted p-4 text-warning">
           <div className="flex items-center gap-3">
-            <span className="text-xl">⚠️</span>
+            <WarningCircle className="h-5 w-5 shrink-0" weight="bold" />
             <div>
-              <p className="text-sm font-bold">
+              <p className="text-sm font-semibold text-text">
                 تنبيه: {approvedWithoutSubCount} مقدم خدمة معتمد ولكن غير ظاهر للعامة!
               </p>
               <p className="text-xs text-text-muted">
@@ -182,232 +184,237 @@ export default async function AdminDashboardOverviewPage() {
               </p>
             </div>
           </div>
-          <Link
-            href="/admin/providers?status=APPROVED&subState=EXPIRED"
-            className="rounded-lg bg-surface px-3 py-1.5 text-xs font-semibold text-text border border-border shadow-xs hover:bg-surface-muted"
-          >
-            عرض القائمة
-          </Link>
+          <Button asChild variant="secondary" size="sm">
+            <Link href="/admin/providers?status=APPROVED&subState=EXPIRED">
+              عرض القائمة
+            </Link>
+          </Button>
         </div>
       )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <AdminCard className="p-4">
+        <Card className="p-4">
           <p className="text-xs text-text-muted">إجمالي المقدمين</p>
-          <p className="mt-1 text-2xl font-black text-text">{totalProviders}</p>
+          <p className="mt-1 font-latin text-2xl font-semibold text-text">{totalProviders}</p>
           <Link
             href="/admin/providers"
-            className="mt-2 block text-xs text-accent hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
           >
-            عرض الكل ←
+            عرض الكل <ArrowLeft className="h-3 w-3" />
           </Link>
-        </AdminCard>
+        </Card>
 
-        <AdminCard className="p-4">
+        <Card className="p-4">
           <p className="text-xs text-text-muted">قيد المراجعة</p>
-          <p className="mt-1 text-2xl font-black text-warning">
+          <p className="mt-1 font-latin text-2xl font-semibold text-warning">
             {pendingProvidersCount}
           </p>
           <Link
             href="/admin/providers?status=PENDING"
-            className="mt-2 block text-xs text-accent hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
           >
-            مراجعة الطلبات ←
+            مراجعة الطلبات <ArrowLeft className="h-3 w-3" />
           </Link>
-        </AdminCard>
+        </Card>
 
-        <AdminCard className="p-4">
+        <Card className="p-4">
           <p className="text-xs text-text-muted">اشتراكات فعّالة</p>
-          <p className="mt-1 text-2xl font-black text-success">{activeCount}</p>
+          <p className="mt-1 font-latin text-2xl font-semibold text-success">{activeCount}</p>
           <Link
             href="/admin/subscriptions?state=ACTIVE"
-            className="mt-2 block text-xs text-accent hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
           >
-            عرض الفعّالة ←
+            عرض الفعّالة <ArrowLeft className="h-3 w-3" />
           </Link>
-        </AdminCard>
+        </Card>
 
-        <AdminCard className="p-4">
+        <Card className="p-4">
           <p className="text-xs text-text-muted">تنتهي خلال 30 يوماً</p>
-          <p className="mt-1 text-2xl font-black text-warning">{expiringCount}</p>
+          <p className="mt-1 font-latin text-2xl font-semibold text-warning">{expiringCount}</p>
           <Link
             href="/admin/subscriptions?state=EXPIRING"
-            className="mt-2 block text-xs text-accent hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
           >
-            متابعة التجديد ←
+            متابعة التجديد <ArrowLeft className="h-3 w-3" />
           </Link>
-        </AdminCard>
+        </Card>
 
-        <AdminCard className="p-4">
+        <Card className="p-4">
           <p className="text-xs text-text-muted">اشتراكات منتهية</p>
-          <p className="mt-1 text-2xl font-black text-danger">{expiredCount}</p>
+          <p className="mt-1 font-latin text-2xl font-semibold text-danger">{expiredCount}</p>
           <Link
             href="/admin/subscriptions?state=EXPIRED"
-            className="mt-2 block text-xs text-accent hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-accent-text hover:underline"
           >
-            عرض المنتهية ←
+            عرض المنتهية <ArrowLeft className="h-3 w-3" />
           </Link>
-        </AdminCard>
+        </Card>
 
-        <AdminCard className="p-4">
+        <Card className="p-4">
           <p className="text-xs text-text-muted">معتمدون بلا اشتراك</p>
-          <p className="mt-1 text-2xl font-black text-text">
+          <p className="mt-1 font-latin text-2xl font-semibold text-text">
             {approvedWithoutSubCount}
           </p>
           <span className="mt-2 block text-xs text-text-muted">غير ظاهرين للزوار</span>
-        </AdminCard>
+        </Card>
 
-        <AdminCard className="p-4">
+        <Card className="p-4">
           <p className="text-xs text-text-muted">إيرادات هذا الشهر</p>
-          <p className="mt-1 text-xl font-black text-text">
-            {revenueMonth.toLocaleString("ar-EG")} <span className="text-xs font-normal">ج.م</span>
+          <p className="mt-1 font-latin text-xl font-semibold text-text">
+            {revenueMonth.toLocaleString("en-US")} <span className="text-xs font-normal">EGP</span>
           </p>
           <span className="mt-2 block text-xs text-text-muted">بتوقيت القاهرة</span>
-        </AdminCard>
+        </Card>
 
-        <AdminCard className="p-4">
+        <Card className="p-4">
           <p className="text-xs text-text-muted">إيرادات هذا العام / الإجمالي</p>
-          <p className="mt-1 text-base font-bold text-text">
-            {revenueYear.toLocaleString("ar-EG")} <span className="text-xs font-normal">ج.م</span>
+          <p className="mt-1 font-latin text-base font-semibold text-text">
+            {revenueYear.toLocaleString("en-US")} <span className="text-xs font-normal">EGP</span>
           </p>
-          <p className="mt-1 text-xs text-text-muted">
-            الإجمالي: {revenueTotal.toLocaleString("ar-EG")} ج.م
+          <p className="mt-1 font-latin text-xs text-text-muted">
+            الإجمالي: {revenueTotal.toLocaleString("en-US")} EGP
           </p>
-        </AdminCard>
+        </Card>
       </div>
 
       {/* Top 5 Lists */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Pending Approval */}
-        <AdminCard className="p-4 sm:p-5">
-          <AdminCardHeader
-            title="بانتظار المراجعة"
-            subtitle="أحدث 5 طلبات انضمام"
-            action={
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>بانتظار المراجعة</CardTitle>
               <Link
                 href="/admin/providers?status=PENDING"
-                className="text-xs font-medium text-accent hover:underline"
+                className="text-xs font-medium text-accent-text hover:underline"
               >
                 عرض الكل
               </Link>
-            }
-          />
-          {pendingList.length === 0 ? (
-            <p className="py-4 text-center text-xs text-text-muted">
-              لا توجد طلبات جديدة بانتظار المراجعة.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {pendingList.map((p) => (
-                <li key={p.id} className="flex items-center justify-between py-2.5">
-                  <div>
-                    <Link
-                      href={`/admin/providers/${p.id}`}
-                      className="text-sm font-semibold text-text hover:text-accent"
-                    >
-                      {p.name}
-                    </Link>
-                    <p className="text-xs text-text-muted">
-                      {DISTRICT_LABELS[p.district]} •{" "}
-                      {formatArabicDateString(toCairoDateString(p.createdAt))}
-                    </p>
-                  </div>
-                  <AdminBadge variant="warning">قيد المراجعة</AdminBadge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </AdminCard>
+            </div>
+            <CardDescription>أحدث 5 طلبات انضمام</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pendingList.length === 0 ? (
+              <p className="py-4 text-center text-xs text-text-muted">
+                لا توجد طلبات جديدة بانتظار المراجعة.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {pendingList.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between py-2.5">
+                    <div>
+                      <Link
+                        href={`/admin/providers/${p.id}`}
+                        className="text-sm font-semibold text-text hover:text-accent-text"
+                      >
+                        {p.name}
+                      </Link>
+                      <p className="text-xs text-text-muted">
+                        {DISTRICT_LABELS[p.district]} •{" "}
+                        {formatArabicDateString(toCairoDateString(p.createdAt))}
+                      </p>
+                    </div>
+                    <Badge variant="warning">قيد المراجعة</Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Expiring Soonest */}
-        <AdminCard className="p-4 sm:p-5">
-          <AdminCardHeader
-            title="الأقرب انتهاءً"
-            subtitle="الاشتراكات التي ستنتهي قريباً"
-            action={
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>الأقرب انتهاءً</CardTitle>
               <Link
                 href="/admin/subscriptions?state=EXPIRING"
-                className="text-xs font-medium text-accent hover:underline"
+                className="text-xs font-medium text-accent-text hover:underline"
               >
                 عرض الكل
               </Link>
-            }
-          />
-          {expiringSoonestSubs.length === 0 ? (
-            <p className="py-4 text-center text-xs text-text-muted">
-              لا توجد اشتراكات فعّالة حالياً.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {expiringSoonestSubs.map((sub) => {
-                const days = daysUntil(sub.endsAt, now);
-                const lastDay = getLastCoveredDateString(sub.endsAt);
-                return (
-                  <li key={sub.id} className="flex items-center justify-between py-2.5">
-                    <div>
-                      <Link
-                        href={`/admin/providers/${sub.provider.id}`}
-                        className="text-sm font-semibold text-text hover:text-accent"
-                      >
-                        {sub.provider.name}
-                      </Link>
-                      <p className="text-xs text-text-muted">
-                        ينتهي: {formatArabicDateString(lastDay)}
-                      </p>
-                    </div>
-                    <span className="text-xs font-bold text-warning">
-                      {days > 0 ? `متبقي ${days} يوم` : "ينتهي اليوم"}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </AdminCard>
+            </div>
+            <CardDescription>الاشتراكات التي ستنتهي قريباً</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {expiringSoonestSubs.length === 0 ? (
+              <p className="py-4 text-center text-xs text-text-muted">
+                لا توجد اشتراكات فعّالة حالياً.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {expiringSoonestSubs.map((sub) => {
+                  const days = daysUntil(sub.endsAt, now);
+                  const lastDay = getLastCoveredDateString(sub.endsAt);
+                  return (
+                    <li key={sub.id} className="flex items-center justify-between py-2.5">
+                      <div>
+                        <Link
+                          href={`/admin/providers/${sub.provider.id}`}
+                          className="text-sm font-semibold text-text hover:text-accent-text"
+                        >
+                          {sub.provider.name}
+                        </Link>
+                        <p className="text-xs text-text-muted">
+                          ينتهي: {formatArabicDateString(lastDay)}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold text-warning">
+                        {days > 0 ? `متبقي ${days} يوم` : "ينتهي اليوم"}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Recently Expired */}
-        <AdminCard className="p-4 sm:p-5">
-          <AdminCardHeader
-            title="انتهت مؤخراً"
-            subtitle="اشتراكات انتهت حديثاً للتواصل"
-            action={
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>انتهت مؤخراً</CardTitle>
               <Link
                 href="/admin/subscriptions?state=EXPIRED"
-                className="text-xs font-medium text-accent hover:underline"
+                className="text-xs font-medium text-accent-text hover:underline"
               >
                 عرض الكل
               </Link>
-            }
-          />
-          {recentlyExpiredSubs.length === 0 ? (
-            <p className="py-4 text-center text-xs text-text-muted">
-              لا توجد اشتراكات منتهية.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {recentlyExpiredSubs.map((sub) => {
-                const lastDay = getLastCoveredDateString(sub.endsAt);
-                return (
-                  <li key={sub.id} className="flex items-center justify-between py-2.5">
-                    <div>
-                      <Link
-                        href={`/admin/providers/${sub.provider.id}`}
-                        className="text-sm font-semibold text-text hover:text-accent"
-                      >
-                        {sub.provider.name}
-                      </Link>
-                      <p className="text-xs text-text-muted">
-                        انتهى: {formatArabicDateString(lastDay)}
-                      </p>
-                    </div>
-                    <AdminBadge variant="danger">منتهي</AdminBadge>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </AdminCard>
+            </div>
+            <CardDescription>اشتراكات انتهت حديثاً للتواصل</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentlyExpiredSubs.length === 0 ? (
+              <p className="py-4 text-center text-xs text-text-muted">
+                لا توجد اشتراكات منتهية.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {recentlyExpiredSubs.map((sub) => {
+                  const lastDay = getLastCoveredDateString(sub.endsAt);
+                  return (
+                    <li key={sub.id} className="flex items-center justify-between py-2.5">
+                      <div>
+                        <Link
+                          href={`/admin/providers/${sub.provider.id}`}
+                          className="text-sm font-semibold text-text hover:text-accent-text"
+                        >
+                          {sub.provider.name}
+                        </Link>
+                        <p className="text-xs text-text-muted">
+                          انتهى: {formatArabicDateString(lastDay)}
+                        </p>
+                      </div>
+                      <Badge variant="danger">منتهي</Badge>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

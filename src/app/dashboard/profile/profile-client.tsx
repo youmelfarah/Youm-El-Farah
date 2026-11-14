@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { UploadSimple, Trash, Check, WarningCircle } from "@phosphor-icons/react";
 import { getCloudinaryUploadSignatureAction } from "@/app/dashboard/cloudinary-actions";
 import {
   uploadFileDirectToCloudinary,
@@ -15,6 +16,13 @@ import {
   saveProviderImageAction,
   updateProfileAction,
 } from "./actions";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Field } from "@/components/ui/field";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/cn";
 
 interface CategoryItem {
   id: string;
@@ -100,15 +108,11 @@ export function ProfileClient({
         setSaveError("يمكنك اختيار 3 تصنيفات كحد أقصى.");
         return;
       }
-      const next = [...selectedCategoryIds, catId];
-      setSelectedCategoryIds(next);
-      if (!primaryCategoryId) {
-        setPrimaryCategoryId(catId);
-      }
+      setSelectedCategoryIds((prev) => [...prev, catId]);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSuspended) return;
 
@@ -116,7 +120,7 @@ export function ProfileClient({
     setSaveError("");
     setSaveSuccess("");
 
-    const result = await updateProfileAction({
+    const res = await updateProfileAction({
       name,
       bio,
       district,
@@ -130,306 +134,254 @@ export function ProfileClient({
     });
 
     setSaving(false);
-    if (result.error) {
-      setSaveError(result.error);
-      return;
+    if (res.error) {
+      setSaveError(res.error);
+    } else {
+      setSaveSuccess("تم حفظ التعديلات بنجاح.");
+      router.refresh();
     }
-
-    setSaveSuccess("تم حفظ تعديلات الملف الشخصي بنجاح.");
-    router.refresh();
   };
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h1 className="text-lg font-bold text-gray-900">تعديل الملف الشخصي</h1>
-        <p className="mt-1 text-xs text-gray-500">
-          الرابط الدائم (Slug - للعرض فقط):{" "}
-          <code dir="ltr" className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-gray-800">
-            {provider.slug}
-          </code>
-        </p>
-      </div>
-
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {/* Uploaders */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <SingleImageUploader
-          title="صورة الشعار (Logo)"
-          hint="تظهر في بطاقة مقدم الخدمة (يُفضّل صورة مربعة، بحد أقصى 5 ميجابايت)."
+          title="شعار النشاط (Logo)"
+          hint="صورة مربعة واضحة تظهر بجوار اسمك في الدليل (PNG أو JPG أو WebP حتى 5MB)"
           kind="logo"
           preset="thumb"
           cloudName={cloudName}
           publicId={logoState.publicId}
           fallbackUrl={logoState.url}
           isSuspended={isSuspended}
-          onUploaded={(next) => {
-            setLogoState(next);
-            router.refresh();
-          }}
-          onDeleted={() => {
-            setLogoState({ url: null, publicId: null });
-            router.refresh();
-          }}
+          onUploaded={(next) => setLogoState(next)}
+          onDeleted={() => setLogoState({ url: null, publicId: null })}
         />
+
         <SingleImageUploader
-          title="صورة الغلاف (Cover)"
-          hint="تظهر أعلى صفحتك (بحد أقصى 5 ميجابايت)."
+          title="صورة الغلاف (Cover Banner)"
+          hint="صورة أفقية عريضة تظهر أعلى صفحة ملفك التعريفي (حتى 5MB)"
           kind="cover"
           preset="cover"
           cloudName={cloudName}
           publicId={coverState.publicId}
           fallbackUrl={coverState.url}
           isSuspended={isSuspended}
-          onUploaded={(next) => {
-            setCoverState(next);
-            router.refresh();
-          }}
-          onDeleted={() => {
-            setCoverState({ url: null, publicId: null });
-            router.refresh();
-          }}
+          onUploaded={(next) => setCoverState(next)}
+          onDeleted={() => setCoverState({ url: null, publicId: null })}
         />
-      </section>
+      </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-      >
-        <div>
-          <label
-            htmlFor="profile-name"
-            className="block text-sm font-medium text-gray-700"
-          >
-            اسم النشاط <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="profile-name"
-            type="text"
-            required
-            minLength={2}
-            maxLength={80}
-            disabled={isSuspended}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm disabled:bg-gray-100"
-          />
-        </div>
+      {/* Main Profile Form Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>البيانات الأساسية للملف التعريفي</CardTitle>
+          <CardDescription>
+            المعلومات التي ستظهر للعرائس والزوار عند استعراض صفحتك في الدليل.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleProfileSubmit} className="space-y-5">
+            <div>
+              <span className="block text-xs font-medium text-text-muted mb-1">
+                الرابط الدائم لصفحتك (Slug)
+              </span>
+              <div
+                dir="ltr"
+                className="rounded-[4px] border border-border bg-surface-muted px-3.5 py-2.5 font-mono text-xs text-text-muted"
+              >
+                /providers/{provider.slug}
+              </div>
+            </div>
 
-        <div>
-          <label
-            htmlFor="profile-bio"
-            className="block text-sm font-medium text-gray-700"
-          >
-            نبذة عن النشاط (نص عادي فقط)
-          </label>
-          <textarea
-            id="profile-bio"
-            rows={5}
-            maxLength={1500}
-            disabled={isSuspended}
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="اكتب وصفاً واضحاً لخدماتك ومميزاتك..."
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm disabled:bg-gray-100"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            {bio.length} / 1500 حرف
-          </p>
-        </div>
+            <Field label="اسم النشاط أو مقدم الخدمة" htmlFor="profile-name" required>
+              <Input
+                id="profile-name"
+                type="text"
+                required
+                minLength={2}
+                maxLength={80}
+                disabled={isSuspended}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Field>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="profile-district"
-              className="block text-sm font-medium text-gray-700"
+            <Field
+              label="النبذة التعريفية"
+              htmlFor="profile-bio"
+              helpText="اكتبي نبذة جذابة توضح خبرتك والخدمات التي تتميزين بها."
             >
-              المركز / المدينة <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="profile-district"
-              required
-              disabled={isSuspended}
-              value={district}
-              onChange={(e) => setDistrict(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm disabled:bg-gray-100"
-            >
-              {DISTRICT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              <Textarea
+                id="profile-bio"
+                rows={4}
+                maxLength={2000}
+                disabled={isSuspended}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="تفاصيل الخدمات، سنوات الخبرة، ما يميزك عن غيرك..."
+              />
+            </Field>
 
-          <div>
-            <label
-              htmlFor="profile-address"
-              className="block text-sm font-medium text-gray-700"
-            >
-              العنوان التفصيلي
-            </label>
-            <input
-              id="profile-address"
-              type="text"
-              maxLength={200}
-              disabled={isSuspended}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="مثال: شارع صلاح سالم، بجوار..."
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm disabled:bg-gray-100"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="profile-phone"
-              className="block text-sm font-medium text-gray-700"
-            >
-              رقم الهاتف
-            </label>
-            <input
-              id="profile-phone"
-              type="tel"
-              disabled={isSuspended}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="01012345678"
-              dir="ltr"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm disabled:bg-gray-100"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="profile-whatsapp"
-              className="block text-sm font-medium text-gray-700"
-            >
-              رقم الواتساب
-            </label>
-            <input
-              id="profile-whatsapp"
-              type="tel"
-              disabled={isSuspended}
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="01012345678"
-              dir="ltr"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm disabled:bg-gray-100"
-            />
-          </div>
-        </div>
-        <p className="text-xs text-gray-500">
-          يجب إدخال رقم الهاتف أو رقم الواتساب على الأقل (يُحفظ بصيغة +20XXXXXXXXXX).
-        </p>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="profile-instagram"
-              className="block text-sm font-medium text-gray-700"
-            >
-              رابط إنستجرام
-            </label>
-            <input
-              id="profile-instagram"
-              type="url"
-              disabled={isSuspended}
-              value={instagramUrl}
-              onChange={(e) => setInstagramUrl(e.target.value)}
-              placeholder="https://www.instagram.com/username"
-              dir="ltr"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm disabled:bg-gray-100"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="profile-facebook"
-              className="block text-sm font-medium text-gray-700"
-            >
-              رابط فيسبوك
-            </label>
-            <input
-              id="profile-facebook"
-              type="url"
-              disabled={isSuspended}
-              value={facebookUrl}
-              onChange={(e) => setFacebookUrl(e.target.value)}
-              placeholder="https://www.facebook.com/page"
-              dir="ltr"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm disabled:bg-gray-100"
-            />
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-medium text-gray-700">
-            التصنيفات (اختر من 1 إلى 3 وحدد تصنيفاً رئيسياً واحداً){" "}
-            <span className="text-red-500">*</span>
-          </p>
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {categories.map((cat) => {
-              const checked = selectedCategoryIds.includes(cat.id);
-              const isPrimary = primaryCategoryId === cat.id;
-              return (
-                <div
-                  key={cat.id}
-                  className={`flex items-center justify-between rounded-lg border p-2.5 text-sm ${
-                    checked
-                      ? "border-blue-300 bg-blue-50/50"
-                      : "border-gray-200 bg-white"
-                  }`}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="المركز / المدينة" htmlFor="profile-district" required>
+                <select
+                  id="profile-district"
+                  required
+                  disabled={isSuspended}
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  className="flex h-11 w-full rounded-[4px] border border-border bg-surface-raised px-3.5 py-2 text-sm text-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <label className="flex flex-1 cursor-pointer items-center gap-2">
-                    <input
-                      type="checkbox"
-                      disabled={isSuspended}
-                      checked={checked}
-                      onChange={() => toggleCategory(cat.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600"
-                    />
-                    <span>{cat.nameAr}</span>
-                  </label>
+                  {DISTRICT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
 
-                  {checked && (
-                    <label className="flex cursor-pointer items-center gap-1 text-xs font-medium text-blue-700">
-                      <input
-                        type="radio"
-                        name="primaryCategory"
-                        disabled={isSuspended}
-                        checked={isPrimary}
-                        onChange={() => setPrimaryCategoryId(cat.id)}
-                      />
-                      <span>رئيسي</span>
-                    </label>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+              <Field label="العنوان التفصيلي" htmlFor="profile-address">
+                <Input
+                  id="profile-address"
+                  type="text"
+                  maxLength={200}
+                  disabled={isSuspended}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="مثال: شارع عبد السلام عارف، برج..."
+                />
+              </Field>
+            </div>
 
-        {saveError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {saveError}
-          </div>
-        )}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="رقم الهاتف (أرقام غربية 0-9)" htmlFor="profile-phone">
+                <Input
+                  id="profile-phone"
+                  type="tel"
+                  disabled={isSuspended}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="01012345678"
+                  dir="ltr"
+                />
+              </Field>
 
-        {saveSuccess && (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-            {saveSuccess}
-          </div>
-        )}
+              <Field label="رقم الواتساب" htmlFor="profile-whatsapp">
+                <Input
+                  id="profile-whatsapp"
+                  type="tel"
+                  disabled={isSuspended}
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder="01012345678"
+                  dir="ltr"
+                />
+              </Field>
+            </div>
+            <p className="text-xs text-text-muted">
+              يجب إدخال رقم الهاتف أو رقم الواتساب على الأقل (يُحفظ بصيغة +20XXXXXXXXXX).
+            </p>
 
-        <button
-          type="submit"
-          disabled={saving || isSuspended}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
-        >
-          {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
-        </button>
-      </form>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="رابط إنستجرام" htmlFor="profile-instagram">
+                <Input
+                  id="profile-instagram"
+                  type="url"
+                  disabled={isSuspended}
+                  value={instagramUrl}
+                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  placeholder="https://www.instagram.com/username"
+                  dir="ltr"
+                />
+              </Field>
+
+              <Field label="رابط فيسبوك" htmlFor="profile-facebook">
+                <Input
+                  id="profile-facebook"
+                  type="url"
+                  disabled={isSuspended}
+                  value={facebookUrl}
+                  onChange={(e) => setFacebookUrl(e.target.value)}
+                  placeholder="https://www.facebook.com/page"
+                  dir="ltr"
+                />
+              </Field>
+            </div>
+
+            {/* Categories Selection */}
+            <div className="space-y-2 border-t border-border pt-4">
+              <span className="block text-xs font-semibold text-text">
+                التصنيفات (اختاري من 1 إلى 3 وحددي تصنيفاً رئيسياً واحداً) *
+              </span>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                {categories.map((cat) => {
+                  const checked = selectedCategoryIds.includes(cat.id);
+                  const isPrimary = primaryCategoryId === cat.id;
+                  return (
+                    <div
+                      key={cat.id}
+                      className={cn(
+                        "flex items-center justify-between rounded-[4px] border p-3 text-xs transition-colors",
+                        checked
+                          ? "border-text bg-surface-muted font-medium text-text"
+                          : "border-border bg-surface-raised text-text-muted"
+                      )}
+                    >
+                      <label className="flex flex-1 cursor-pointer items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          disabled={isSuspended}
+                          checked={checked}
+                          onChange={() => toggleCategory(cat.id)}
+                          className="h-4 w-4 rounded-[2px] border-border text-text focus:ring-ring"
+                        />
+                        <span>{cat.nameAr}</span>
+                      </label>
+
+                      {checked && (
+                        <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-accent-text">
+                          <input
+                            type="radio"
+                            name="primaryCategory"
+                            disabled={isSuspended}
+                            checked={isPrimary}
+                            onChange={() => setPrimaryCategoryId(cat.id)}
+                          />
+                          <span>رئيسي</span>
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {saveError && (
+              <div className="rounded-[4px] border border-danger/30 bg-danger-muted p-3 text-xs text-danger">
+                {saveError}
+              </div>
+            )}
+
+            {saveSuccess && (
+              <div className="rounded-[4px] border border-success/30 bg-success-muted p-3 text-xs text-success">
+                {saveSuccess}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              loading={saving}
+              disabled={isSuspended}
+              variant="primary"
+              className="w-full"
+            >
+              حفظ التغييرات
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -539,14 +491,15 @@ function SingleImageUploader({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <h2 className="text-sm font-bold text-gray-900">{title}</h2>
-      <p className="mt-0.5 text-xs text-gray-500">{hint}</p>
+    <Card className="p-5">
+      <CardHeader className="p-0 pb-3 mb-3 border-b border-border/60">
+        <CardTitle className="text-base">{title}</CardTitle>
+        <CardDescription className="text-xs">{hint}</CardDescription>
+      </CardHeader>
 
-      <div className="mt-3 overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-50">
+      <div className="overflow-hidden rounded-[2px] border border-dashed border-border bg-surface-muted">
         {displayUrl ? (
           previewUrl ? (
-            // Local blob preview while upload is in progress
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={displayUrl}
@@ -571,21 +524,21 @@ function SingleImageUploader({
             />
           )
         ) : (
-          <div className="flex h-36 items-center justify-center text-xs text-gray-400">
-            لا توجد صورة مرفوعة
+          <div className="flex h-36 items-center justify-center font-latin text-xs text-text-muted/60 uppercase">
+            NO IMAGE UPLOADED
           </div>
         )}
       </div>
 
       {uploading && (
-        <div className="mt-2">
-          <div className="flex justify-between text-xs text-gray-600">
-            <span>جارٍ الرفع...</span>
+        <div className="mt-3 space-y-1">
+          <div className="flex justify-between text-xs text-text-muted font-latin">
+            <span>Uploading...</span>
             <span>{progress}%</span>
           </div>
-          <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+          <div className="h-1.5 w-full overflow-hidden rounded-[2px] bg-surface-muted border border-border">
             <div
-              className="h-full bg-blue-600 transition-all"
+              className="h-full bg-text transition-all duration-150"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -593,17 +546,17 @@ function SingleImageUploader({
       )}
 
       {error && (
-        <p className="mt-2 text-xs font-medium text-red-600">{error}</p>
+        <p className="mt-2 text-xs font-medium text-danger">{error}</p>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <label
-          className={`inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700 ${
-            uploading || deleting || isSuspended
-              ? "pointer-events-none opacity-50"
-              : ""
-          }`}
+          className={cn(
+            "inline-flex cursor-pointer items-center justify-center gap-2 rounded-[4px] bg-text px-3 py-2 text-xs font-medium text-text-inverse transition hover:opacity-90",
+            (uploading || deleting || isSuspended) && "pointer-events-none opacity-50"
+          )}
         >
+          <UploadSimple className="h-4 w-4" weight="bold" />
           <span>{displayUrl ? "تغيير الصورة" : "رفع صورة"}</span>
           <input
             type="file"
@@ -615,17 +568,20 @@ function SingleImageUploader({
         </label>
 
         {(publicId || fallbackUrl) && (
-          <button
+          <Button
             type="button"
+            variant="danger-outline"
+            size="sm"
             disabled={uploading || deleting || isSuspended}
+            loading={deleting}
             onClick={handleDelete}
-            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+            className="gap-1.5"
           >
-            {deleting ? "جارٍ الحذف..." : "حذف"}
-          </button>
+            <Trash className="h-3.5 w-3.5" weight="light" />
+            <span>حذف</span>
+          </Button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
-

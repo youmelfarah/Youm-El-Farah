@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { LogoutButton } from "@/components/logout-button";
+import { Logo } from "@/components/brand/Logo";
+import { Button } from "@/components/ui/button";
 
 type HeaderUser = {
   name?: string | null;
@@ -15,57 +17,48 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { data: session, isPending } = useSession();
 
-  // DashboardShell renders its own dedicated sticky header and navigation
-  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
+  // DashboardShell and Admin layout render their own dedicated headers
+  if (
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/")
+  ) {
     return null;
   }
 
   const user = session?.user as HeaderUser | undefined;
 
   return (
-    <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-        <Link
-          href="/"
-          className="text-lg font-bold text-gray-900 transition hover:text-blue-600"
-        >
-          يوم الفرح
-        </Link>
+    <header className="border-b border-border bg-surface-raised sticky top-0 z-40">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
+        <Logo href="/" variant="horizontal" size="sm" />
 
         <nav aria-label="التنقل الرئيسي" className="flex items-center gap-3">
           {isPending ? (
-            <span className="text-xs text-gray-400">...</span>
+            <span className="text-xs text-text-muted">...</span>
           ) : user ? (
             <>
-              <span className="hidden text-sm text-gray-600 sm:inline">
+              <span className="hidden text-xs text-text-muted sm:inline font-medium">
                 {user.name || user.email}
               </span>
               {user.role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
-                >
-                  لوحة الإدارة
-                </Link>
+                <Button asChild variant="secondary" size="sm">
+                  <Link href="/admin">لوحة الإدارة</Link>
+                </Button>
               )}
               {user.role === "PROVIDER" && (
-                <Link
-                  href="/dashboard"
-                  className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
-                >
-                  لوحة مقدم الخدمة
-                </Link>
+                <Button asChild variant="secondary" size="sm">
+                  <Link href="/dashboard">لوحة مقدم الخدمة</Link>
+                </Button>
               )}
-              <LogoutButton className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50" />
+              <LogoutButton />
             </>
           ) : (
             pathname !== "/login" && (
-              <Link
-                href="/login"
-                className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700"
-              >
-                تسجيل الدخول
-              </Link>
+              <Button asChild variant="primary" size="sm">
+                <Link href="/login">تسجيل الدخول</Link>
+              </Button>
             )
           )}
         </nav>

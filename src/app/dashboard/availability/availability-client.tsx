@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CaretLeft, CaretRight, CalendarCheck, Check, Warning } from "@phosphor-icons/react";
 import {
   ARABIC_MONTHS,
   ARABIC_WEEKDAYS_SHORT,
@@ -14,6 +15,10 @@ import {
   parseDateString,
 } from "@/lib/calendar-dates";
 import { blockDates, unblockDates } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/cn";
 
 interface MonthOption {
   year: number;
@@ -219,257 +224,288 @@ export function AvailabilityClient({
   );
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h1 className="text-lg font-bold text-gray-900">تقويم التوافر والمواعيد</h1>
-        <p className="mt-1 text-xs text-gray-500">
-          حدّد الأيام المحجوزة أو غير المتاحة خلال الـ 18 شهراً القادمة (بتوقيت القاهرة).
-        </p>
-
-        {/* Mode toggle */}
-        <div className="mt-3 flex gap-2">
-          <button
-            type="button"
-            disabled={isSuspended}
-            onClick={() => {
-              setMode("single");
-              setRangeStart(null);
-              setRangeEnd(null);
-              setError("");
-            }}
-            className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              mode === "single"
-                ? "border-blue-600 bg-blue-50 text-blue-700"
-                : "border-gray-300 bg-white text-gray-700"
-            }`}
-          >
-            تحديد يوم واحد
-          </button>
-          <button
-            type="button"
-            disabled={isSuspended}
-            onClick={() => {
-              setMode("range");
-              setRangeStart(null);
-              setRangeEnd(null);
-              setError("");
-            }}
-            className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              mode === "range"
-                ? "border-blue-600 bg-blue-50 text-blue-700"
-                : "border-gray-300 bg-white text-gray-700"
-            }`}
-          >
-            تحديد فترة (من - إلى)
-          </button>
-        </div>
-
-        <p className="mt-2 text-xs text-gray-600">
-          {mode === "single"
-            ? "اضغط على أي يوم متاح لحجزه، أو اضغط على يوم محجوز لإلغاء الحجز."
-            : "اضغط على يوم البداية ثم يوم النهاية، وبعدها اختر حجز الفترة أو إلغاء الحجز."}
-        </p>
-      </div>
-
-      {/* Month selector */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            disabled={monthIndex <= 0}
-            onClick={() => setMonthIndex((i) => Math.max(0, i - 1))}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-          >
-            الشهر السابق
-          </button>
-
-          <select
-            aria-label="اختيار الشهر"
-            value={monthIndex}
-            onChange={(e) => setMonthIndex(Number(e.target.value))}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-bold text-gray-900"
-          >
-            {monthOptions.map((opt, idx) => (
-              <option key={`${opt.year}-${opt.month}`} value={idx}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          <button
-            type="button"
-            disabled={monthIndex >= monthOptions.length - 1}
-            onClick={() =>
-              setMonthIndex((i) => Math.min(monthOptions.length - 1, i + 1))
-            }
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-          >
-            الشهر التالي
-          </button>
-        </div>
-
-        {/* Weekday headers starting Saturday */}
-        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-500">
-          {ARABIC_WEEKDAYS_SHORT.map((dayName) => (
-            <div key={dayName} className="py-1">
-              {dayName}
+    <div className="space-y-6">
+      {/* Top Header Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>تقويم التوافر والمواعيد</CardTitle>
+              <CardDescription>
+                حدّدي الأيام المحجوزة أو المتاحة خلال الـ 18 شهراً القادمة (بتوقيت القاهرة).
+              </CardDescription>
             </div>
-          ))}
-        </div>
 
-        {/* Calendar grid */}
-        <div className="mt-1 grid grid-cols-7 gap-1">
-          {calendarCells.map((cell) => {
-            if (!cell.day || !cell.dateStr) {
-              return <div key={cell.key} className="h-11" />;
-            }
-
-            const dateStr = cell.dateStr;
-            const isOutOfRange = dateStr < todayStr || dateStr > maxDateStr;
-            const isBooked = blockedSet.has(dateStr);
-            const isInRange = rangePreviewSet.has(dateStr);
-            const isToday = dateStr === todayStr;
-
-            let cellClass =
-              "border-gray-200 bg-white text-gray-900 hover:bg-gray-50";
-            if (isOutOfRange) {
-              cellClass =
-                "border-gray-100 bg-gray-100 text-gray-300 cursor-not-allowed";
-            } else if (isInRange) {
-              cellClass =
-                "border-blue-600 bg-blue-100 text-blue-900 font-bold";
-            } else if (isBooked) {
-              cellClass =
-                "border-red-300 bg-red-100 text-red-900 font-bold hover:bg-red-200";
-            }
-
-            return (
-              <button
-                key={cell.key}
-                type="button"
-                disabled={isOutOfRange || isSuspended || loading}
-                onClick={() =>
-                  mode === "single"
-                    ? handleSingleTap(dateStr)
-                    : handleRangeTap(dateStr)
-                }
-                aria-pressed={isBooked}
-                aria-label={`${formatArabicDateString(dateStr)}${isBooked ? " - محجوز" : ""}`}
-                className={`relative flex h-11 flex-col items-center justify-center rounded-lg border text-sm transition disabled:cursor-not-allowed ${cellClass} ${
-                  isToday ? "ring-2 ring-blue-500 ring-offset-1" : ""
-                }`}
-              >
-                <span>{cell.day}</span>
-                {isBooked && !isOutOfRange && (
-                  <span className="text-[9px] leading-none text-red-700">
-                    محجوز
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Legend */}
-        <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-gray-100 pt-3 text-xs text-gray-600">
-          <div className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded border border-gray-300 bg-white" />
-            <span>متاح</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded border border-red-300 bg-red-100" />
-            <span>محجوز / غير متاح</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded border border-gray-200 bg-gray-100" />
-            <span>خارج النطاق المسموح</span>
-          </div>
-        </div>
-
-        {/* Range action bar */}
-        {mode === "range" && rangeStart && !isSuspended && (
-          <div className="mt-4 space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
-            <p className="text-xs font-medium text-blue-900">
-              {rangeEnd
-                ? `الفترة المحددة: من ${formatArabicDateString(
-                    rangeStart <= rangeEnd ? rangeStart : rangeEnd
-                  )} إلى ${formatArabicDateString(
-                    rangeStart <= rangeEnd ? rangeEnd : rangeStart
-                  )} (${rangePreviewSet.size} يوم)`
-                : `تاريخ البداية: ${formatArabicDateString(rangeStart)} — اضغط على تاريخ النهاية أو نفّذ على هذا اليوم`}
-            </p>
-            <div className="flex flex-wrap gap-2">
+            {/* Mode toggle */}
+            <div className="inline-flex rounded-[4px] border border-border bg-surface-muted p-1">
               <button
                 type="button"
-                disabled={loading}
-                onClick={() => handleApplyRange("block")}
-                className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {loading ? "جارٍ التنفيذ..." : "حجز الفترة المحددة"}
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handleApplyRange("unblock")}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50 disabled:opacity-50"
-              >
-                إلغاء حجز الفترة
-              </button>
-              <button
-                type="button"
-                disabled={loading}
+                disabled={isSuspended}
                 onClick={() => {
+                  setMode("single");
                   setRangeStart(null);
                   setRangeEnd(null);
+                  setError("");
                 }}
-                className="rounded-lg px-2 py-2 text-xs text-gray-600 hover:underline"
+                className={cn(
+                  "min-h-[36px] rounded-[2px] px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+                  mode === "single"
+                    ? "bg-text text-text-inverse font-semibold"
+                    : "text-text-muted hover:text-text"
+                )}
               >
-                مسح التحديد
+                تحديد يوم واحد
+              </button>
+              <button
+                type="button"
+                disabled={isSuspended}
+                onClick={() => {
+                  setMode("range");
+                  setRangeStart(null);
+                  setRangeEnd(null);
+                  setError("");
+                }}
+                className={cn(
+                  "min-h-[36px] rounded-[2px] px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+                  mode === "range"
+                    ? "bg-text text-text-inverse font-semibold"
+                    : "text-text-muted hover:text-text"
+                )}
+              >
+                تحديد فترة (من - إلى)
               </button>
             </div>
           </div>
-        )}
+        </CardHeader>
+      </Card>
 
-        {error && (
-          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
+      {/* Calendar Card */}
+      <Card>
+        <CardContent className="p-5 sm:p-6">
+          {/* Month selector navigation */}
+          <div className="flex items-center justify-between gap-2 border-b border-border pb-4">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={monthIndex <= 0}
+              onClick={() => setMonthIndex((i) => Math.max(0, i - 1))}
+              className="gap-1"
+            >
+              <CaretRight className="h-4 w-4" weight="bold" />
+              <span>الشهر السابق</span>
+            </Button>
+
+            <select
+              aria-label="اختيار الشهر"
+              value={monthIndex}
+              onChange={(e) => setMonthIndex(Number(e.target.value))}
+              className="h-10 rounded-[4px] border border-border bg-surface-raised px-4 py-1.5 text-sm font-semibold text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {monthOptions.map((opt, idx) => (
+                <option key={`${opt.year}-${opt.month}`} value={idx}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={monthIndex >= monthOptions.length - 1}
+              onClick={() =>
+                setMonthIndex((i) => Math.min(monthOptions.length - 1, i + 1))
+              }
+              className="gap-1"
+            >
+              <span>الشهر التالي</span>
+              <CaretLeft className="h-4 w-4" weight="bold" />
+            </Button>
           </div>
-        )}
 
-        {statusMessage && (
-          <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-            {statusMessage}
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-bold text-gray-900">
-          الأيام المحجوزة القادمة ({upcomingBlockedList.length})
-        </h2>
-        {upcomingBlockedList.length === 0 ? (
-          <p className="mt-2 text-xs text-gray-500">
-            لا توجد أيام محجوزة حالياً.
-          </p>
-        ) : (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {upcomingBlockedList.slice(0, 30).map((d) => (
-              <span
-                key={d}
-                className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-800"
-              >
-                {formatArabicDateString(d)}
-              </span>
+          {/* Weekday headers starting Saturday */}
+          <div className="mt-4 grid grid-cols-7 gap-1.5 text-center text-xs font-medium text-text-muted">
+            {ARABIC_WEEKDAYS_SHORT.map((dayName) => (
+              <div key={dayName} className="py-1">
+                {dayName}
+              </div>
             ))}
-            {upcomingBlockedList.length > 30 && (
-              <span className="px-2 py-1 text-xs text-gray-500">
-                و {upcomingBlockedList.length - 30} يوماً آخر...
-              </span>
-            )}
           </div>
-        )}
-      </div>
+
+          {/* Calendar grid */}
+          <div className="mt-2 grid grid-cols-7 gap-1.5">
+            {calendarCells.map((cell) => {
+              if (!cell.day || !cell.dateStr) {
+                return <div key={cell.key} className="h-11 min-h-[44px]" />;
+              }
+
+              const dateStr = cell.dateStr;
+              const isOutOfRange = dateStr < todayStr || dateStr > maxDateStr;
+              const isBooked = blockedSet.has(dateStr);
+              const isInRange = rangePreviewSet.has(dateStr);
+              const isToday = dateStr === todayStr;
+
+              // Specifications:
+              // Booked days: clearly distinguished (solid ink with ivory text)
+              // Today: thin ring
+              // Past days: muted
+              // 44px comfortable touch target
+              let cellClass =
+                "border-border bg-surface-raised text-text hover:border-border-strong hover:bg-surface-muted";
+
+              if (isOutOfRange) {
+                cellClass =
+                  "border-border/30 bg-surface-muted/40 text-text-muted/40 cursor-not-allowed";
+              } else if (isInRange) {
+                cellClass =
+                  "border-accent bg-accent/20 text-text font-bold";
+              } else if (isBooked) {
+                cellClass =
+                  "border-text bg-text text-text-inverse font-semibold hover:opacity-90";
+              }
+
+              return (
+                <button
+                  key={cell.key}
+                  type="button"
+                  disabled={isOutOfRange || isSuspended || loading}
+                  onClick={() =>
+                    mode === "single"
+                      ? handleSingleTap(dateStr)
+                      : handleRangeTap(dateStr)
+                  }
+                  aria-pressed={isBooked}
+                  aria-label={`${formatArabicDateString(dateStr)}${isBooked ? " - محجوز" : ""}`}
+                  className={cn(
+                    "relative flex h-11 min-h-[44px] flex-col items-center justify-center rounded-[4px] border text-sm transition-colors cursor-pointer disabled:cursor-not-allowed select-none",
+                    cellClass,
+                    isToday && "ring-2 ring-ring ring-offset-2 ring-offset-surface"
+                  )}
+                >
+                  <span className="font-latin text-xs leading-none">{cell.day}</span>
+                  {isBooked && !isOutOfRange && (
+                    <span className="text-[9px] leading-none mt-1 opacity-90">
+                      محجوز
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="mt-6 flex flex-wrap items-center gap-6 border-t border-border pt-4 text-xs text-text-muted">
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3.5 w-3.5 rounded-[2px] border border-border bg-surface-raised" />
+              <span>متاح للحجز</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3.5 w-3.5 rounded-[2px] border border-text bg-text text-text-inverse" />
+              <span className="font-semibold text-text">محجوز (حبر مصمت)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3.5 w-3.5 rounded-[2px] border border-border/40 bg-surface-muted/40" />
+              <span>خارج النطاق المسموح</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3.5 w-3.5 rounded-[2px] ring-2 ring-ring" />
+              <span>اليوم الحالي</span>
+            </div>
+          </div>
+
+          {/* Range action bar */}
+          {mode === "range" && rangeStart && !isSuspended && (
+            <div className="mt-6 rounded-[4px] border border-accent/40 bg-accent/10 p-4 space-y-3">
+              <p className="text-xs font-medium text-text">
+                {rangeEnd
+                  ? `الفترة المحددة: من ${formatArabicDateString(
+                      rangeStart <= rangeEnd ? rangeStart : rangeEnd
+                    )} إلى ${formatArabicDateString(
+                      rangeStart <= rangeEnd ? rangeEnd : rangeStart
+                    )} (${rangePreviewSet.size} يوم)`
+                  : `تاريخ البداية: ${formatArabicDateString(rangeStart)} — اضغطي على تاريخ النهاية لتأكيد الفترة`}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  loading={loading}
+                  onClick={() => handleApplyRange("block")}
+                >
+                  حجز الفترة المحددة
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  loading={loading}
+                  onClick={() => handleApplyRange("unblock")}
+                >
+                  إلغاء حجز الفترة
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={loading}
+                  onClick={() => {
+                    setRangeStart(null);
+                    setRangeEnd(null);
+                  }}
+                >
+                  مسح التحديد
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 rounded-[4px] border border-danger/30 bg-danger-muted p-3 text-xs text-danger">
+              {error}
+            </div>
+          )}
+
+          {statusMessage && (
+            <div className="mt-4 rounded-[4px] border border-success/30 bg-success-muted p-3 text-xs text-success">
+              {statusMessage}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Upcoming Blocked Dates Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>الأيام المحجوزة القادمة ({upcomingBlockedList.length})</CardTitle>
+          <CardDescription>قائمة المواعيد المحجوزة المسجلة حالياً في النظام</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {upcomingBlockedList.length === 0 ? (
+            <p className="text-xs text-text-muted">
+              لا توجد أيام محجوزة حالياً، كافة الأيام متاحة للحجز.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {upcomingBlockedList.slice(0, 30).map((d) => (
+                <Badge
+                  key={d}
+                  variant="neutral"
+                  className="font-latin text-xs"
+                >
+                  {formatArabicDateString(d)}
+                </Badge>
+              ))}
+              {upcomingBlockedList.length > 30 && (
+                <span className="px-2 py-1 text-xs text-text-muted font-latin">
+                  و {upcomingBlockedList.length - 30} يوماً آخر...
+                </span>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
-

@@ -163,7 +163,7 @@ export async function reorderCategoryAction(input: {
   try {
     await prisma.$transaction(async (tx) => {
       const categories = await tx.category.findMany({
-        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
       });
 
       const currentIndex = categories.findIndex((c) => c.id === parsedId.data);

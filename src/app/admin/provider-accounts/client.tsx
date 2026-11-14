@@ -1,12 +1,29 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Copy, Check, Key, Plus } from "@phosphor-icons/react";
 import {
   createProviderAction,
   resetProviderPasswordAction,
   toggleProviderActiveAction,
   listProvidersAction,
 } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  MobileCardList,
+  MobileCardItem,
+  MobileCardRow,
+} from "@/components/ui/table";
 
 type Provider = {
   id: string;
@@ -35,12 +52,22 @@ export function ProviderAccountsClient() {
 
   return (
     <div className="space-y-6">
-      <button
-        onClick={() => setShowCreateForm(!showCreateForm)}
-        className="rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition hover:bg-green-700"
-      >
-        {showCreateForm ? "إلغاء" : "إنشاء حساب مقدم خدمة"}
-      </button>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-text sm:text-3xl">
+            حسابات مقدمي الخدمة
+          </h1>
+          <p className="mt-1 text-xs text-text-muted">
+            إدارة الحسابات، إنشاء بيانات دخول جديدة، وإعادة تعيين كلمات المرور.
+          </p>
+        </div>
+        <Button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          variant={showCreateForm ? "secondary" : "primary"}
+        >
+          {showCreateForm ? "إلغاء" : "إنشاء حساب مقدم خدمة"}
+        </Button>
+      </div>
 
       {showCreateForm && (
         <CreateProviderForm
@@ -52,9 +79,13 @@ export function ProviderAccountsClient() {
       )}
 
       {loading ? (
-        <p className="text-gray-500">جارٍ التحميل...</p>
+        <Card className="p-8 text-center text-xs text-text-muted">
+          جارٍ التحميل...
+        </Card>
       ) : providers.length === 0 ? (
-        <p className="text-gray-500">لا يوجد مقدمو خدمة بعد.</p>
+        <Card className="p-8 text-center text-xs text-text-muted">
+          لا يوجد مقدمو خدمة بعد.
+        </Card>
       ) : (
         <ProvidersTable providers={providers} onUpdate={loadProviders} />
       )}
@@ -110,98 +141,116 @@ function CreateProviderForm({ onCreated }: { onCreated: () => void }) {
 
   if (tempPassword) {
     return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-6 space-y-4">
-        <h3 className="font-semibold text-green-800">
-          تم إنشاء الحساب بنجاح!
-        </h3>
-        <p className="text-sm text-green-700">
-          كلمة المرور المؤقتة (لن تظهر مرة أخرى):
-        </p>
-        <div className="flex items-center gap-2">
+      <Card className="border-warning/40 bg-warning-muted/30 p-6 space-y-4">
+        <div>
+          <h3 className="font-display text-base font-semibold text-text">
+            تم إنشاء حساب مقدم الخدمة بنجاح
+          </h3>
+          <p className="mt-1 text-xs text-text-muted">
+            يرجى حفظ كلمة المرور المؤقتة ومشاركتها مع مقدم الخدمة، فلن تظهر مرة أخرى.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <code
-            className="flex-1 rounded bg-white px-3 py-2 font-mono text-sm"
+            className="flex-1 rounded-[4px] border border-border bg-surface-raised px-3.5 py-2 font-mono text-sm text-text"
             dir="ltr"
           >
             {tempPassword}
           </code>
-          <button
+          <Button
+            type="button"
+            variant="secondary"
             onClick={copyPassword}
-            className="rounded bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
+            className="shrink-0"
           >
-            {copied ? "تم النسخ!" : "نسخ"}
-          </button>
+            {copied ? (
+              <>
+                <Check className="h-4 w-4 text-success" weight="bold" />
+                <span>تم النسخ!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4 text-text-muted" weight="light" />
+                <span>نسخ</span>
+              </>
+            )}
+          </Button>
         </div>
-        <button
-          onClick={onCreated}
-          className="rounded bg-gray-600 px-4 py-2 text-sm text-white hover:bg-gray-700"
-        >
-          إغلاق
-        </button>
-      </div>
+
+        <Button onClick={onCreated} variant="primary" className="w-full">
+          تم الحفظ ومتابعة
+        </Button>
+      </Card>
     );
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-lg border border-gray-200 bg-white p-6 space-y-4"
-    >
-      <h3 className="font-semibold text-gray-800">إنشاء حساب مقدم خدمة</h3>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">الاسم</label>
-        <input
-          type="text"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          البريد الإلكتروني
-        </label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          dir="ltr"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          كلمة المرور المؤقتة
-        </label>
-        <div className="mt-1 flex gap-2">
-          <input
+    <Card className="p-6">
+      <CardHeader className="p-0 pb-4 mb-4 border-b border-border">
+        <CardTitle>بيانات حساب مقدم الخدمة الجديد</CardTitle>
+        <CardDescription>
+          سيُطلب من مقدم الخدمة تغيير كلمة المرور عند أول تسجيل دخول.
+        </CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="الاسم" required>
+          <Input
             type="text"
             required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="block flex-1 rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </Field>
+
+        <Field label="البريد الإلكتروني" required>
+          <Input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             dir="ltr"
           />
-          <button
-            type="button"
-            onClick={generatePassword}
-            className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 hover:bg-gray-200"
-          >
-            توليد كلمة مرور قوية
-          </button>
-        </div>
-      </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
-      >
-        {loading ? "جارٍ الإنشاء..." : "إنشاء الحساب"}
-      </button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-    </form>
+        </Field>
+
+        <Field label="كلمة المرور المؤقتة" required>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              dir="ltr"
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={generatePassword}
+              className="shrink-0 text-xs"
+            >
+              <Key className="h-4 w-4" weight="light" />
+              <span>توليد تلقائي</span>
+            </Button>
+          </div>
+        </Field>
+
+        <Button
+          type="submit"
+          loading={loading}
+          variant="primary"
+          className="w-full"
+        >
+          إنشاء الحساب
+        </Button>
+        {error && (
+          <p className="rounded-[4px] border border-danger/30 bg-danger-muted p-2 text-xs text-danger">
+            {error}
+          </p>
+        )}
+      </form>
+    </Card>
   );
 }
 
@@ -263,110 +312,149 @@ function ProvidersTable({
   return (
     <div className="space-y-4">
       {resetResult && (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 space-y-2">
-          <p className="font-medium text-yellow-800">
-            تم إعادة تعيين كلمة المرور (لن تظهر مرة أخرى):
+        <Card className="border-warning/40 bg-warning-muted/30 p-4 space-y-2">
+          <p className="font-semibold text-text text-xs">
+            تمت إعادة تعيين كلمة المرور (لن تظهر مرة أخرى):
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 rounded bg-white px-3 py-2 font-mono text-sm" dir="ltr">
+            <code
+              className="flex-1 rounded-[4px] border border-border bg-surface-raised px-3 py-1.5 font-mono text-sm text-text"
+              dir="ltr"
+            >
               {resetResult.password}
             </code>
-            <button
+            <Button
+              size="sm"
+              variant="secondary"
               onClick={() => copyPassword(resetResult.password)}
-              className="rounded bg-yellow-600 px-3 py-2 text-sm text-white hover:bg-yellow-700"
             >
               {copied ? "تم النسخ!" : "نسخ"}
-            </button>
+            </Button>
           </div>
           <button
+            type="button"
             onClick={() => setResetResult(null)}
-            className="text-sm text-yellow-700 underline"
+            className="text-xs text-text-muted underline cursor-pointer"
           >
             إغلاق
           </button>
-        </div>
+        </Card>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                الاسم
-              </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                البريد الإلكتروني
-              </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                الحالة
-              </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                يجب تغيير كلمة المرور
-              </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                تاريخ الإنشاء
-              </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                الإجراءات
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {providers.map((provider) => (
-              <tr key={provider.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-sm">
-                  {provider.name}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm" dir="ltr">
+      {/* Mobile Card List */}
+      <MobileCardList>
+        {providers.map((provider) => (
+          <MobileCardItem key={provider.id}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-semibold text-text">{provider.name}</p>
+                <p className="text-xs text-text-muted font-latin" dir="ltr">
                   {provider.email}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                      provider.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
+                </p>
+              </div>
+              <Badge variant={provider.isActive ? "success" : "danger"} size="sm">
+                {provider.isActive ? "نشط" : "معطل"}
+              </Badge>
+            </div>
+
+            <div className="border-y border-border py-2 text-xs space-y-1">
+              <MobileCardRow label="تغيير كلمة المرور إلزامي">
+                {provider.mustChangePassword ? (
+                  <Badge variant="warning" size="sm">نعم</Badge>
+                ) : (
+                  <span className="text-text-muted">لا</span>
+                )}
+              </MobileCardRow>
+              <MobileCardRow label="تاريخ الإنشاء">
+                <span className="font-latin">
+                  {new Date(provider.createdAt).toLocaleDateString("en-US")}
+                </span>
+              </MobileCardRow>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => handleResetPassword(provider.id)}
+                disabled={actionLoading === provider.id}
+                className="flex-1"
+              >
+                إعادة تعيين كلمة المرور
+              </Button>
+              <Button
+                size="sm"
+                variant={provider.isActive ? "danger" : "accent"}
+                onClick={() => handleToggleActive(provider.id)}
+                disabled={actionLoading === provider.id}
+              >
+                {provider.isActive ? "تعطيل" : "تفعيل"}
+              </Button>
+            </div>
+          </MobileCardItem>
+        ))}
+      </MobileCardList>
+
+      {/* Desktop Table */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>الاسم</TableHead>
+              <TableHead>البريد الإلكتروني</TableHead>
+              <TableHead>الحالة</TableHead>
+              <TableHead>يجب تغيير كلمة المرور</TableHead>
+              <TableHead>تاريخ الإنشاء</TableHead>
+              <TableHead className="text-end">الإجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {providers.map((provider) => (
+              <TableRow key={provider.id}>
+                <TableCell className="font-medium">{provider.name}</TableCell>
+                <TableCell dir="ltr" className="font-latin text-xs">
+                  {provider.email}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={provider.isActive ? "success" : "danger"} size="sm">
                     {provider.isActive ? "نشط" : "معطل"}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm">
+                  </Badge>
+                </TableCell>
+                <TableCell>
                   {provider.mustChangePassword ? (
-                    <span className="text-yellow-600">نعم</span>
+                    <Badge variant="warning" size="sm">نعم</Badge>
                   ) : (
-                    <span className="text-gray-400">لا</span>
+                    <span className="text-text-muted text-xs">لا</span>
                   )}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm" dir="ltr">
-                  {new Date(provider.createdAt).toLocaleDateString("ar-EG")}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm space-x-2 space-x-reverse">
-                  <button
-                    onClick={() => handleResetPassword(provider.id)}
-                    disabled={actionLoading === provider.id}
-                    className="rounded bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700 hover:bg-yellow-200 disabled:opacity-50"
-                  >
-                    إعادة تعيين كلمة المرور
-                  </button>
-                  <button
-                    onClick={() => handleToggleActive(provider.id)}
-                    disabled={actionLoading === provider.id}
-                    className={`rounded px-2 py-1 text-xs font-medium disabled:opacity-50 ${
-                      provider.isActive
-                        ? "bg-red-100 text-red-700 hover:bg-red-200"
-                        : "bg-green-100 text-green-700 hover:bg-green-200"
-                    }`}
-                  >
-                    {provider.isActive ? "تعطيل" : "تفعيل"}
-                  </button>
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell className="font-latin text-xs text-text-muted">
+                  {new Date(provider.createdAt).toLocaleDateString("en-US")}
+                </TableCell>
+                <TableCell className="text-end">
+                  <div className="inline-flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleResetPassword(provider.id)}
+                      disabled={actionLoading === provider.id}
+                    >
+                      إعادة تعيين كلمة المرور
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={provider.isActive ? "secondary" : "accent"}
+                      onClick={() => handleToggleActive(provider.id)}
+                      disabled={actionLoading === provider.id}
+                    >
+                      {provider.isActive ? "تعطيل" : "تفعيل"}
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
 }
-

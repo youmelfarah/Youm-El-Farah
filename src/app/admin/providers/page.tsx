@@ -6,10 +6,20 @@ import { DISTRICT_LABELS, DISTRICT_VALUES } from "@/lib/districts";
 import { getLastCoveredDateString, toCairoDateString } from "@/lib/cairo-time";
 import { formatArabicDateString } from "@/lib/calendar-dates";
 import { getSubscriptionState, SubscriptionState } from "@/lib/subscription";
-import { AdminCard } from "@/components/admin/card";
-import { AdminBadge } from "@/components/admin/badge";
-import { AdminTable, AdminTableBody, AdminTableHead, AdminTd, AdminTh } from "@/components/admin/table";
-import { AdminPagination } from "@/components/admin/pagination";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  MobileCardList,
+  MobileCardItem,
+} from "@/components/ui/table";
+import { DataPagination } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
 import { District, Prisma, ProviderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -60,12 +70,10 @@ export default async function AdminProvidersListPage(props: {
     role: "PROVIDER",
   };
 
-  // Search filter
   if (search) {
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },
       { email: { contains: search, mode: "insensitive" } },
-      { phone: { contains: search, mode: "insensitive" } },
       {
         provider: {
           OR: [
@@ -78,17 +86,11 @@ export default async function AdminProvidersListPage(props: {
     ];
   }
 
-  // Provider filters
+  // Provider-level filters
   const providerWhere: Prisma.ProviderWhereInput = {};
-
-  if (statusFilter && ["PENDING", "APPROVED", "SUSPENDED"].includes(statusFilter)) {
+  if (statusFilter) {
     providerWhere.status = statusFilter as ProviderStatus;
   }
-
-  if (districtFilter && DISTRICT_VALUES.includes(districtFilter as District)) {
-    providerWhere.district = districtFilter as District;
-  }
-
   if (categoryFilter) {
     providerWhere.categories = {
       some: {
@@ -96,146 +98,211 @@ export default async function AdminProvidersListPage(props: {
       },
     };
   }
+  if (districtFilter) {
+    providerWhere.district = districtFilter as District;
+  }
 
-  if (statusFilter === "NOT_COMPLETED") {
-    where.provider = null;
-  } else if (Object.keys(providerWhere).length > 0) {
+  if (Object.keys(providerWhere).length > 0) {
     where.provider = providerWhere;
   }
 
-  // Fetch users with provider and subscriptions
+  // Fetch all users matching criteria
+  const now = new Date();
   const users = await prisma.user.findMany({
     where,
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
       provider: {
-        include: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          district: true,
+          phone: true,
+          whatsapp: true,
+          createdAt: true,
           categories: {
-            include: { category: true },
+            select: {
+              isPrimary: true,
+              category: {
+                select: { id: true, nameAr: true },
+              },
+            },
           },
           subscriptions: {
-            orderBy: { endsAt: "desc" },
+            select: {
+              id: true,
+              status: true,
+              startsAt: true,
+              endsAt: true,
+            },
           },
         },
       },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
   });
 
-  const now = new Date();
+  // Process rows with subscription state
+  type RowItem = {
+    userId: string;
+    email: string;
+    name: string;
+    providerId: string | null;
+    status: ProviderStatus | "NOT_COMPLETED";
+    primaryCategoryName: string;
+    district: District | null;
+    phone: string | null;
+    whatsapp: string | null;
+    subState: SubscriptionState;
+    lastCoveredDay: string | null;
+    rawSubEnd: Date | null;
+    createdAt: Date;
+    isCompleted: boolean;
+  };
 
-  // Map to unified display items
-  let items = users.map((user) => {
-    const prov = user.provider;
-    const isCompleted = Boolean(prov);
-    const subState: SubscriptionState = prov
-      ? getSubscriptionState(prov.subscriptions, now)
-      : "NONE";
+  const rows: RowItem[] = users.map((u) => {
+    const p = u.provider;
+    if (!p) {
+      return {
+        userId: u.id,
+        email: u.email,
+        name: u.name || "مقدم غير مكتمل",
+        providerId: null,
+        status: "NOT_COMPLETED",
+        primaryCategoryName: "-",
+        district: null,
+        phone: null,
+        whatsapp: null,
+        subState: "NONE",
+        lastCoveredDay: null,
+        rawSubEnd: null,
+        createdAt: u.createdAt,
+        isCompleted: false,
+      };
+    }
 
-    const primaryCat = prov?.categories.find((c) => c.isPrimary)?.category?.nameAr;
-    const fallbackCat = prov?.categories[0]?.category?.nameAr;
+    const subState = getSubscriptionState(p.subscriptions, now);
+    let lastCoveredDay: string | null = null;
+    let rawSubEnd: Date | null = null;
 
-    // Latest active or latest subscription
-    const activeSub = prov?.subscriptions.find((s) => s.status === "ACTIVE" && s.endsAt > now);
-    const latestSub = activeSub || prov?.subscriptions[0];
-    const subEndsAt = latestSub ? latestSub.endsAt : null;
-    const lastCoveredDay = subEndsAt ? getLastCoveredDateString(subEndsAt) : null;
+    const activeOrExpiring = p.subscriptions
+      .filter((s) => s.status === "ACTIVE" && s.endsAt > now)
+      .sort((a, b) => b.endsAt.getTime() - a.endsAt.getTime());
+
+    if (activeOrExpiring.length > 0) {
+      rawSubEnd = activeOrExpiring[0].endsAt;
+      lastCoveredDay = getLastCoveredDateString(rawSubEnd);
+    } else {
+      const pastSubs = p.subscriptions
+        .filter((s) => s.status === "ACTIVE" && s.endsAt <= now)
+        .sort((a, b) => b.endsAt.getTime() - a.endsAt.getTime());
+      if (pastSubs.length > 0) {
+        rawSubEnd = pastSubs[0].endsAt;
+        lastCoveredDay = getLastCoveredDateString(rawSubEnd);
+      }
+    }
+
+    const primaryCat = p.categories.find((c) => c.isPrimary) || p.categories[0];
+    const primaryCategoryName = primaryCat?.category?.nameAr || "-";
 
     return {
-      providerId: prov?.id ?? null,
-      userId: user.id,
-      name: prov?.name ?? user.name,
-      email: user.email,
-      slug: prov?.slug ?? null,
-      isCompleted,
-      status: prov ? prov.status : ("NOT_COMPLETED" as const),
-      primaryCategoryName: primaryCat || fallbackCat || "-",
-      district: prov?.district ?? null,
-      phone: prov?.phone ?? user.phone ?? "-",
-      whatsapp: prov?.whatsapp ?? null,
-      createdAt: prov?.createdAt ?? user.createdAt,
+      userId: u.id,
+      email: u.email,
+      name: p.name,
+      providerId: p.id,
+      status: p.status,
+      primaryCategoryName,
+      district: p.district,
+      phone: p.phone,
+      whatsapp: p.whatsapp,
       subState,
-      subEndsAt,
       lastCoveredDay,
+      rawSubEnd,
+      createdAt: p.createdAt,
+      isCompleted: true,
     };
   });
 
-  // Filter by subState if requested
-  if (subStateFilter) {
-    items = items.filter((item) => item.subState === subStateFilter);
-  }
+  // Apply in-memory subscription state filter if specified
+  const filteredRows = subStateFilter
+    ? rows.filter((r) => r.subState === subStateFilter)
+    : rows;
 
-  // Sort items
-  items.sort((a, b) => {
+  // In-memory sorting
+  filteredRows.sort((a, b) => {
     if (sortBy === "name") {
       const cmp = a.name.localeCompare(b.name, "ar");
       return sortOrder === "asc" ? cmp : -cmp;
     }
     if (sortBy === "subEnd") {
-      const aTime = a.subEndsAt ? a.subEndsAt.getTime() : 0;
-      const bTime = b.subEndsAt ? b.subEndsAt.getTime() : 0;
-      return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
+      const timeA = a.rawSubEnd ? a.rawSubEnd.getTime() : 0;
+      const timeB = b.rawSubEnd ? b.rawSubEnd.getTime() : 0;
+      return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
     }
-    // Default sortBy === "createdAt"
-    const aTime = a.createdAt.getTime();
-    const bTime = b.createdAt.getTime();
-    return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
+    // Default createdAt
+    const timeA = a.createdAt.getTime();
+    const timeB = b.createdAt.getTime();
+    return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
   });
 
-  const totalItems = items.length;
-  const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
-  const paginatedItems = items.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  // Pagination
+  const totalItems = filteredRows.length;
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const paginatedItems = filteredRows.slice(startIndex, startIndex + PAGE_SIZE);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-text sm:text-2xl">مقدمو الخدمة</h1>
+          <h1 className="font-display text-2xl font-bold text-text sm:text-3xl">إدارة مقدمي الخدمة</h1>
           <p className="mt-1 text-xs text-text-muted">
-            إدارة بيانات مقدمي الخدمة، حالات التوثيق والاشتراكات.
+            متابعة حسابات الشركاء، مراجعة الملفات واعتمادها، وحالة اشتراكاتهم.
           </p>
         </div>
-        <Link
-          href="/admin/provider-accounts"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white transition hover:bg-accent-hover"
-        >
-          <span>+</span>
-          <span>إنشاء حساب مقدم جديد</span>
-        </Link>
+        <Button asChild variant="primary">
+          <Link href="/admin/provider-accounts">
+            + إنشاء حساب مقدم جديد
+          </Link>
+        </Button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <AdminCard className="p-4">
-        <form method="GET" className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+      {/* Filter Card */}
+      <Card className="p-4">
+        <form
+          method="GET"
+          action="/admin/providers"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6"
+        >
           {/* Search */}
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-text mb-1">بحث</label>
+            <label className="block text-xs font-medium text-text mb-1">
+              بحث (الاسم، البريد، الهاتف)
+            </label>
             <input
               type="text"
               name="search"
               defaultValue={search}
-              placeholder="الاسم، البريد أو الهاتف..."
-              className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              placeholder="ابحث بالاسم أو رقم الهاتف..."
+              className="h-11 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-xs text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
           {/* Status */}
           <div>
-            <label className="block text-xs font-medium text-text mb-1">حالة الحساب</label>
+            <label className="block text-xs font-medium text-text mb-1">حالة الملف</label>
             <select
               name="status"
               defaultValue={statusFilter}
-              className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-text focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-11 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-xs text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">الكل</option>
-              <option value="PENDING">قيد المراجعة</option>
+              <option value="">كل الحالات</option>
               <option value="APPROVED">معتمد</option>
+              <option value="PENDING">قيد المراجعة</option>
               <option value="SUSPENDED">موقوف</option>
-              <option value="NOT_COMPLETED">لم يكمل التسجيل</option>
             </select>
           </div>
 
@@ -245,7 +312,7 @@ export default async function AdminProvidersListPage(props: {
             <select
               name="category"
               defaultValue={categoryFilter}
-              className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-text focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-11 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-xs text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">كل الفئات</option>
               {allCategories.map((c) => (
@@ -262,7 +329,7 @@ export default async function AdminProvidersListPage(props: {
             <select
               name="district"
               defaultValue={districtFilter}
-              className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-text focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-11 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-xs text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">كل المراكز</option>
               {DISTRICT_VALUES.map((d) => (
@@ -279,7 +346,7 @@ export default async function AdminProvidersListPage(props: {
             <select
               name="subState"
               defaultValue={subStateFilter}
-              className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-text focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-11 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-xs text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">كل الاشتراكات</option>
               <option value="ACTIVE">نشط</option>
@@ -292,13 +359,13 @@ export default async function AdminProvidersListPage(props: {
           </div>
 
           {/* Sort By */}
-          <div className="flex items-end gap-2 lg:col-span-6 pt-1 border-t border-border mt-1">
+          <div className="flex flex-wrap items-center justify-between gap-3 lg:col-span-6 pt-3 border-t border-border mt-1">
             <div className="flex items-center gap-2 text-xs">
               <span className="text-text-muted">ترتيب حسب:</span>
               <select
                 name="sortBy"
                 defaultValue={sortBy}
-                className="rounded-lg border border-border bg-surface px-2 py-1 text-xs text-text"
+                className="h-9 rounded-[4px] border border-border bg-surface-raised px-2.5 py-1 text-xs text-text"
               >
                 <option value="createdAt">تاريخ التسجيل</option>
                 <option value="name">الاسم</option>
@@ -307,185 +374,188 @@ export default async function AdminProvidersListPage(props: {
               <select
                 name="sortOrder"
                 defaultValue={sortOrder}
-                className="rounded-lg border border-border bg-surface px-2 py-1 text-xs text-text"
+                className="h-9 rounded-[4px] border border-border bg-surface-raised px-2.5 py-1 text-xs text-text"
               >
                 <option value="desc">تنازلي</option>
                 <option value="asc">تصاعدي</option>
               </select>
             </div>
 
-            <button
-              type="submit"
-              className="mr-auto rounded-lg bg-accent px-4 py-1.5 text-xs font-semibold text-white hover:bg-accent-hover cursor-pointer"
-            >
-              تطبيق الفلاتر
-            </button>
-            <Link
-              href="/admin/providers"
-              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-surface-muted"
-            >
-              إعادة تعيين
-            </Link>
+            <div className="flex items-center gap-2 ms-auto">
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+              >
+                تطبيق الفلاتر
+              </Button>
+              <Button
+                asChild
+                variant="secondary"
+                size="sm"
+              >
+                <Link href="/admin/providers">
+                  إعادة تعيين
+                </Link>
+              </Button>
+            </div>
           </div>
         </form>
-      </AdminCard>
+      </Card>
 
       {/* Mobile Cards List */}
-      <div className="space-y-3 md:hidden">
+      <MobileCardList>
         {paginatedItems.length === 0 ? (
-          <AdminCard className="p-6 text-center text-xs text-text-muted">
+          <Card className="p-6 text-center text-xs text-text-muted">
             لا توجد نتائج مطابقة لبحثك.
-          </AdminCard>
+          </Card>
         ) : (
           paginatedItems.map((item) => (
-            <AdminCard key={item.providerId ?? item.userId} className="p-4 space-y-2.5">
+            <MobileCardItem key={item.providerId ?? item.userId}>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   {item.isCompleted ? (
                     <Link
                       href={`/admin/providers/${item.providerId}`}
-                      className="text-sm font-bold text-text hover:text-accent"
+                      className="text-sm font-semibold text-text hover:text-accent-text"
                     >
                       {item.name}
                     </Link>
                   ) : (
-                    <span className="text-sm font-bold text-text">{item.name}</span>
+                    <span className="text-sm font-semibold text-text">{item.name}</span>
                   )}
-                  <p className="text-xs text-text-muted truncate" dir="ltr">
+                  <p className="text-xs text-text-muted font-latin" dir="ltr">
                     {item.email}
                   </p>
                 </div>
                 {renderStatusBadge(item.status)}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs border-y border-border py-2 text-text">
+              <div className="grid grid-cols-2 gap-2 border-y border-border py-2 text-xs text-text-muted">
                 <div>
-                  <span className="text-text-muted">الفئة: </span>
-                  <span className="font-medium">{item.primaryCategoryName}</span>
+                  الفئة: <strong className="text-text">{item.primaryCategoryName}</strong>
                 </div>
                 <div>
-                  <span className="text-text-muted">المركز: </span>
-                  <span className="font-medium">
+                  المركز:{" "}
+                  <strong className="text-text">
                     {item.district ? DISTRICT_LABELS[item.district] : "-"}
+                  </strong>
+                </div>
+                <div>
+                  الاشتراك: {renderSubStateBadge(item.subState, item.lastCoveredDay)}
+                </div>
+                <div>
+                  التسجيل:{" "}
+                  <span className="font-latin">
+                    {formatArabicDateString(toCairoDateString(item.createdAt))}
                   </span>
-                </div>
-                <div>
-                  <span className="text-text-muted">التواصل: </span>
-                  <span dir="ltr" className="font-mono">{item.whatsapp || item.phone}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted">الاشتراك: </span>
-                  {renderSubStateBadge(item.subState, item.lastCoveredDay)}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs pt-1">
-                <span className="text-text-muted">
-                  {formatArabicDateString(toCairoDateString(item.createdAt))}
+              <div className="flex items-center justify-between pt-1">
+                <span dir="ltr" className="font-mono text-xs text-text">
+                  {item.whatsapp || item.phone || "-"}
                 </span>
+
                 {item.isCompleted ? (
-                  <Link
-                    href={`/admin/providers/${item.providerId}`}
-                    className="font-medium text-accent hover:underline"
-                  >
-                    عرض التفاصيل ←
-                  </Link>
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={`/admin/providers/${item.providerId}`}>
+                      عرض التفاصيل
+                    </Link>
+                  </Button>
                 ) : (
-                  <Link
-                    href="/admin/provider-accounts"
-                    className="font-medium text-warning hover:underline"
-                  >
-                    إدارة الحساب ←
-                  </Link>
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href="/admin/provider-accounts">
+                      حساب غير مكتمل
+                    </Link>
+                  </Button>
                 )}
               </div>
-            </AdminCard>
+            </MobileCardItem>
           ))
         )}
-      </div>
+      </MobileCardList>
 
       {/* Desktop Table View */}
       <div className="hidden md:block">
-        <AdminTable>
-          <AdminTableHead>
-            <tr>
-              <AdminTh>مقدم الخدمة</AdminTh>
-              <AdminTh>الفئة الرئيسية</AdminTh>
-              <AdminTh>المركز</AdminTh>
-              <AdminTh>الحالة</AdminTh>
-              <AdminTh>الاشتراك</AdminTh>
-              <AdminTh>وسيلة التواصل</AdminTh>
-              <AdminTh>تاريخ التسجيل</AdminTh>
-              <AdminTh>إجراءات</AdminTh>
-            </tr>
-          </AdminTableHead>
-          <AdminTableBody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>مقدم الخدمة</TableHead>
+              <TableHead>الفئة الرئيسية</TableHead>
+              <TableHead>المركز</TableHead>
+              <TableHead>الحالة</TableHead>
+              <TableHead>الاشتراك</TableHead>
+              <TableHead>وسيلة التواصل</TableHead>
+              <TableHead>تاريخ التسجيل</TableHead>
+              <TableHead className="text-end">إجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {paginatedItems.length === 0 ? (
-              <tr>
-                <AdminTd className="py-8 text-center text-xs text-text-muted" colSpan={8}>
+              <TableRow>
+                <TableCell className="py-8 text-center text-xs text-text-muted" colSpan={8}>
                   لا توجد نتائج مطابقة لبحثك.
-                </AdminTd>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               paginatedItems.map((item) => (
-                <tr key={item.providerId ?? item.userId} className="hover:bg-surface-muted/50">
-                  <AdminTd>
+                <TableRow key={item.providerId ?? item.userId}>
+                  <TableCell>
                     <div>
                       {item.isCompleted ? (
                         <Link
                           href={`/admin/providers/${item.providerId}`}
-                          className="font-semibold text-text hover:text-accent"
+                          className="font-semibold text-text hover:text-accent-text"
                         >
                           {item.name}
                         </Link>
                       ) : (
                         <span className="font-semibold text-text">{item.name}</span>
                       )}
-                      <p className="text-xs text-text-muted truncate" dir="ltr">
+                      <p className="text-xs text-text-muted truncate font-latin" dir="ltr">
                         {item.email}
                       </p>
                     </div>
-                  </AdminTd>
-                  <AdminTd className="text-xs">{item.primaryCategoryName}</AdminTd>
-                  <AdminTd className="text-xs">
+                  </TableCell>
+                  <TableCell className="text-xs">{item.primaryCategoryName}</TableCell>
+                  <TableCell className="text-xs">
                     {item.district ? DISTRICT_LABELS[item.district] : "-"}
-                  </AdminTd>
-                  <AdminTd>{renderStatusBadge(item.status)}</AdminTd>
-                  <AdminTd>{renderSubStateBadge(item.subState, item.lastCoveredDay)}</AdminTd>
-                  <AdminTd>
+                  </TableCell>
+                  <TableCell>{renderStatusBadge(item.status)}</TableCell>
+                  <TableCell>{renderSubStateBadge(item.subState, item.lastCoveredDay)}</TableCell>
+                  <TableCell>
                     <span dir="ltr" className="font-mono text-xs text-text">
                       {item.whatsapp || item.phone}
                     </span>
-                  </AdminTd>
-                  <AdminTd className="text-xs text-text-muted">
+                  </TableCell>
+                  <TableCell className="text-xs text-text-muted font-latin">
                     {formatArabicDateString(toCairoDateString(item.createdAt))}
-                  </AdminTd>
-                  <AdminTd>
+                  </TableCell>
+                  <TableCell className="text-end">
                     {item.isCompleted ? (
-                      <Link
-                        href={`/admin/providers/${item.providerId}`}
-                        className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-text hover:bg-surface-muted"
-                      >
-                        عرض التفاصيل
-                      </Link>
+                      <Button asChild variant="secondary" size="sm">
+                        <Link href={`/admin/providers/${item.providerId}`}>
+                          عرض التفاصيل
+                        </Link>
+                      </Button>
                     ) : (
-                      <Link
-                        href="/admin/provider-accounts"
-                        className="rounded-md border border-warning bg-warning-muted px-2.5 py-1 text-xs font-medium text-warning hover:opacity-90"
-                      >
-                        حساب غير مكتمل
-                      </Link>
+                      <Button asChild variant="secondary" size="sm">
+                        <Link href="/admin/provider-accounts">
+                          حساب غير مكتمل
+                        </Link>
+                      </Button>
                     )}
-                  </AdminTd>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </AdminTableBody>
-        </AdminTable>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}
-      <AdminPagination
+      <DataPagination
         currentPage={currentPage}
         totalPages={totalPages}
         totalItems={totalItems}
@@ -497,24 +567,24 @@ export default async function AdminProvidersListPage(props: {
 
 function renderStatusBadge(status: ProviderStatus | "NOT_COMPLETED") {
   if (status === "APPROVED") {
-    return <AdminBadge variant="success">معتمد</AdminBadge>;
+    return <Badge variant="success" size="sm">معتمد</Badge>;
   }
   if (status === "PENDING") {
-    return <AdminBadge variant="warning">قيد المراجعة</AdminBadge>;
+    return <Badge variant="warning" size="sm">قيد المراجعة</Badge>;
   }
   if (status === "SUSPENDED") {
-    return <AdminBadge variant="danger">موقوف</AdminBadge>;
+    return <Badge variant="danger" size="sm">موقوف</Badge>;
   }
-  return <AdminBadge variant="neutral">لم يكمل التسجيل</AdminBadge>;
+  return <Badge variant="neutral" size="sm">لم يكمل التسجيل</Badge>;
 }
 
 function renderSubStateBadge(state: SubscriptionState, lastCoveredDay: string | null) {
   if (state === "ACTIVE") {
     return (
       <div className="space-y-0.5">
-        <AdminBadge variant="success">نشط</AdminBadge>
+        <Badge variant="success" size="sm">نشط</Badge>
         {lastCoveredDay && (
-          <p className="text-[10px] text-text-muted">ينتهي: {lastCoveredDay}</p>
+          <p className="text-[10px] text-text-muted font-latin">ينتهي: {lastCoveredDay}</p>
         )}
       </div>
     );
@@ -522,9 +592,9 @@ function renderSubStateBadge(state: SubscriptionState, lastCoveredDay: string | 
   if (state === "EXPIRING") {
     return (
       <div className="space-y-0.5">
-        <AdminBadge variant="warning">أوشك على الانتهاء</AdminBadge>
+        <Badge variant="warning" size="sm">أوشك على الانتهاء</Badge>
         {lastCoveredDay && (
-          <p className="text-[10px] text-warning font-semibold">ينتهي: {lastCoveredDay}</p>
+          <p className="text-[10px] text-warning font-semibold font-latin">ينتهي: {lastCoveredDay}</p>
         )}
       </div>
     );
@@ -532,18 +602,18 @@ function renderSubStateBadge(state: SubscriptionState, lastCoveredDay: string | 
   if (state === "EXPIRED") {
     return (
       <div className="space-y-0.5">
-        <AdminBadge variant="danger">منتهي</AdminBadge>
+        <Badge variant="danger" size="sm">منتهي</Badge>
         {lastCoveredDay && (
-          <p className="text-[10px] text-text-muted">انتهى: {lastCoveredDay}</p>
+          <p className="text-[10px] text-text-muted font-latin">انتهى: {lastCoveredDay}</p>
         )}
       </div>
     );
   }
   if (state === "FUTURE") {
-    return <AdminBadge variant="accent">مستقبلي</AdminBadge>;
+    return <Badge variant="accent" size="sm">مستقبلي</Badge>;
   }
   if (state === "CANCELLED") {
-    return <AdminBadge variant="neutral">ملغي</AdminBadge>;
+    return <Badge variant="neutral" size="sm">ملغي</Badge>;
   }
-  return <AdminBadge variant="neutral">بدون اشتراك</AdminBadge>;
+  return <Badge variant="neutral" size="sm">بدون اشتراك</Badge>;
 }

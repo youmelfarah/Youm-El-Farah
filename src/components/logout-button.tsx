@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 
 export function LogoutButton({ className }: { className?: string }) {
   const [loading, setLoading] = useState(false);
@@ -20,17 +21,15 @@ export function LogoutButton({ className }: { className?: string }) {
   };
 
   return (
-    <button
+    <Button
       type="button"
+      variant="secondary"
+      size="sm"
       onClick={handleLogout}
-      disabled={loading}
-      className={
-        className ??
-        "rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-      }
+      loading={loading}
+      className={className}
     >
-      {loading ? "جارٍ الخروج..." : "تسجيل الخروج"}
-    </button>
+      تسجيل الخروج
+    </Button>
   );
 }
-

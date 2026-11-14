@@ -1,12 +1,31 @@
 import type { Metadata } from "next";
-import { Cairo } from "next/font/google";
+import { El_Messiri, IBM_Plex_Sans_Arabic, Cormorant_Garamond } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
+import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
 
-const cairo = Cairo({
+const elMessiri = El_Messiri({
   subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
-  variable: "--font-cairo",
+  preload: true,
+  variable: "--font-display-ar",
+});
+
+const ibmPlexArabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  preload: true,
+  variable: "--font-body",
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  preload: true,
+  variable: "--font-display-latin",
 });
 
 export const metadata: Metadata = {
@@ -21,10 +40,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
-      <body className={`${cairo.variable} font-sans antialiased`}>
+    <html lang="ar" dir="rtl" data-theme="light">
+      <body
+        className={`${elMessiri.variable} ${ibmPlexArabic.variable} ${cormorant.variable} min-h-screen bg-surface font-body text-text antialiased`}
+      >
         <SiteHeader />
         {children}
+        <Toaster />
       </body>
     </html>
   );

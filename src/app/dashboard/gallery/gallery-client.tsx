@@ -3,6 +3,15 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  UploadSimple,
+  Trash,
+  PencilSimple,
+  CaretUp,
+  CaretDown,
+  Image as ImageIcon,
+  FilmStrip,
+} from "@phosphor-icons/react";
 import { getCloudinaryUploadSignatureAction } from "@/app/dashboard/cloudinary-actions";
 import {
   uploadFileDirectToCloudinary,
@@ -16,6 +25,13 @@ import {
   reorderMediaAction,
   updateMediaCaptionAction,
 } from "./actions";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/cn";
 
 export interface MediaItem {
   id: string;
@@ -119,12 +135,11 @@ export function GalleryClient({
       progress: 0,
       status: "uploading",
     }));
-    setPendingUploads(batch);
+    setPendingUploads((prev) => [...prev, ...batch]);
 
     for (let i = 0; i < validFiles.length; i++) {
       const file = validFiles[i];
       const localId = batch[i].localId;
-      const previewUrl = batch[i].previewUrl;
 
       try {
         const uploaded = await uploadFileDirectToCloudinary(
@@ -150,6 +165,7 @@ export function GalleryClient({
         const saveRes = await addGalleryImageAction({
           publicId: uploaded.publicId,
         });
+
         if (saveRes.error) {
           throw new Error(saveRes.error);
         }
@@ -160,27 +176,37 @@ export function GalleryClient({
           )
         );
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "فشل رفع الصورة";
+        const msg = err instanceof Error ? err.message : "فشل الرفع";
         setPendingUploads((prev) =>
           prev.map((item) =>
             item.localId === localId
-              ? { ...item, status: "error", error: message }
+              ? { ...item, status: "error", error: msg }
               : item
           )
         );
-      } finally {
-        URL.revokeObjectURL(previewUrl);
       }
     }
 
-    router.refresh();
-    setPendingUploads((prev) => prev.filter((item) => item.status === "error"));
+    // Clean up successful blob URLs and refresh
+    setTimeout(() => {
+      setPendingUploads((prev) => {
+        const remainingErrors: PendingUpload[] = [];
+        for (const item of prev) {
+          if (item.status === "done") {
+            URL.revokeObjectURL(item.previewUrl);
+          } else {
+            remainingErrors.push(item);
+          }
+        }
+        return remainingErrors;
+      });
+      router.refresh();
+    }, 800);
   };
 
   const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSuspended || videoAtLimit) return;
+    if (isSuspended) return;
 
     setAddingVideo(true);
     setVideoError("");
@@ -189,8 +215,8 @@ export function GalleryClient({
       url: videoUrl,
       caption: videoCaption,
     });
-
     setAddingVideo(false);
+
     if (res.error) {
       setVideoError(res.error);
       return;
@@ -203,19 +229,9 @@ export function GalleryClient({
 
   const handleDelete = async (mediaId: string, isImage: boolean) => {
     if (isSuspended) return;
-    if (
-      !confirm(
-        isImage
-          ? "هل أنت متأكد من حذف هذه الصورة؟"
-          : "هل أنت متأكد من حذف هذا الفيديو؟"
-      )
-    ) {
-      return;
-    }
+    if (!confirm("هل أنت متأكد من حذف هذا العنصر؟")) return;
 
     setBusyId(mediaId);
-    setImageError("");
-    setVideoError("");
     const res = await deleteMediaAction({ mediaId });
     setBusyId(null);
 
@@ -265,399 +281,355 @@ export function GalleryClient({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Images Section */}
-      <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">معرض الصور</h1>
-            <p className="mt-0.5 text-sm font-medium text-gray-600">
-              استخدمت {images.length} من {imageLimit}
-            </p>
-          </div>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <CardTitle>معرض الصور</CardTitle>
+              <CardDescription>
+                استخدمت <span className="font-latin font-bold text-text">{images.length}</span> من أصل{" "}
+                <span className="font-latin font-bold text-text">{imageLimit}</span> صورة مسموحة (JPG، PNG، WebP حتى 5MB).
+              </CardDescription>
+            </div>
 
-          <label
-            className={`inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 ${
-              imageAtLimit || isSuspended || isUploading
-                ? "pointer-events-none opacity-50"
-                : ""
-            }`}
-          >
-            <span>{isUploading ? "جارٍ الرفع..." : "رفع صور"}</span>
-            <input
-              type="file"
-              multiple
-              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-              disabled={imageAtLimit || isSuspended || isUploading}
-              onChange={handleFilesSelected}
-              className="sr-only"
-            />
-          </label>
-        </div>
-
-        <p className="text-xs text-gray-500">
-          يُسمح برفع صور JPG أو PNG أو WebP بحد أقصى 5 ميجابايت للصورة الواحدة.
-        </p>
-
-        {imageAtLimit && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-            لقد وصلت إلى الحد الأقصى للصور المسموح بها ({imageLimit}). احذف صورة حالية لإضافة صور جديدة.
-          </div>
-        )}
-
-        {imageError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {imageError}
-          </div>
-        )}
-
-        {pendingUploads.length > 0 && (
-          <div className="space-y-2">
-            {pendingUploads.map((item) => (
-              <div
-                key={item.localId}
-                className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-2.5"
-              >
-                {/* Local blob preview */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.previewUrl}
-                  alt={item.fileName}
-                  className="h-12 w-12 shrink-0 rounded object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-gray-800">
-                    {item.fileName}
-                  </p>
-                  {item.status === "error" ? (
-                    <p className="text-xs text-red-600">{item.error}</p>
-                  ) : (
-                    <>
-                      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
-                        <div
-                          className="h-full bg-blue-600 transition-all"
-                          style={{ width: `${item.progress}%` }}
-                        />
-                      </div>
-                      <p className="mt-0.5 text-[11px] text-gray-500">
-                        {item.status === "saving"
-                          ? "جارٍ التحقق والحفظ..."
-                          : `${item.progress}%`}
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {images.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-            لا توجد صور في المعرض بعد.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {images.map((img, index) => {
-              const src =
-                resolveCloudinaryDisplayUrl({
-                  publicId: img.cloudinaryPublicId,
-                  fallbackUrl: img.url,
-                  preset: "card",
-                  cloudName,
-                }) ?? img.url;
-              const isBusy = busyId === img.id;
-              const isEditingCaption = editingCaptionId === img.id;
-
-              return (
-                <div
-                  key={img.id}
-                  className="overflow-hidden rounded-lg border border-gray-200 bg-white"
-                >
-                  <div className="relative aspect-[4/3] w-full bg-gray-100">
-                    <Image
-                      src={src}
-                      alt={img.caption || "صورة من المعرض"}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 50vw"
-                      className="object-cover"
-                    />
-                  </div>
-
-                  <div className="space-y-2 p-3">
-                    {isEditingCaption && !isSuspended ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          maxLength={120}
-                          value={captionDraft}
-                          onChange={(e) => setCaptionDraft(e.target.value)}
-                          placeholder="وصف مختصر (اختياري، 120 حرف)"
-                          className="block w-full rounded border border-gray-300 px-2.5 py-1.5 text-xs"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={isBusy}
-                            onClick={() => handleSaveCaption(img.id, true)}
-                            className="rounded bg-blue-600 px-2.5 py-1 text-xs font-medium text-white"
-                          >
-                            حفظ
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingCaptionId(null)}
-                            className="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-700"
-                          >
-                            إلغاء
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="min-h-[1.25rem] text-xs text-gray-700">
-                        {img.caption || (
-                          <span className="text-gray-400">بدون تعليق</span>
-                        )}
-                      </p>
-                    )}
-
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-2">
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          disabled={isSuspended || isBusy || index === 0}
-                          onClick={() => handleReorder(img.id, "up", true)}
-                          aria-label="تحريك لأعلى"
-                          className="rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-40"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          disabled={
-                            isSuspended || isBusy || index === images.length - 1
-                          }
-                          onClick={() => handleReorder(img.id, "down", true)}
-                          aria-label="تحريك لأسفل"
-                          className="rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-40"
-                        >
-                          ↓
-                        </button>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          disabled={isSuspended || isBusy}
-                          onClick={() => {
-                            setEditingCaptionId(img.id);
-                            setCaptionDraft(img.caption ?? "");
-                          }}
-                          className="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                          التعليق
-                        </button>
-                        <button
-                          type="button"
-                          disabled={isSuspended || isBusy}
-                          onClick={() => handleDelete(img.id, true)}
-                          className="rounded border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700 hover:bg-red-100 disabled:opacity-50"
-                        >
-                          حذف
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Videos Section */}
-      <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">روابط الفيديو</h2>
-          <p className="mt-0.5 text-sm font-medium text-gray-600">
-            استخدمت {videos.length} من {videoLimit}
-          </p>
-        </div>
-
-        {videoAtLimit && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-            لقد وصلت إلى الحد الأقصى للفيديوهات المسموح بها ({videoLimit}). احذف فيديو حالياً لإضافة رابط جديد.
-          </div>
-        )}
-
-        <form onSubmit={handleAddVideo} className="space-y-3">
-          <div>
             <label
-              htmlFor="video-url"
-              className="block text-sm font-medium text-gray-700"
+              className={cn(
+                "inline-flex cursor-pointer items-center justify-center gap-2 rounded-[4px] bg-text px-4 py-2.5 text-xs font-semibold text-text-inverse transition hover:opacity-90",
+                (imageAtLimit || isSuspended || isUploading) && "pointer-events-none opacity-50"
+              )}
             >
-              رابط الفيديو (YouTube أو Facebook أو Instagram)
+              <UploadSimple className="h-4 w-4" weight="bold" />
+              <span>{isUploading ? "جارٍ الرفع..." : "رفع صور جديدة"}</span>
+              <input
+                type="file"
+                multiple
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                disabled={imageAtLimit || isSuspended || isUploading}
+                onChange={handleFilesSelected}
+                className="sr-only"
+              />
             </label>
-            <input
-              id="video-url"
-              type="url"
-              required
-              disabled={videoAtLimit || isSuspended}
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=..."
-              dir="ltr"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100"
-            />
           </div>
+        </CardHeader>
 
-          <div>
-            <label
-              htmlFor="video-caption"
-              className="block text-sm font-medium text-gray-700"
-            >
-              تعليق على الفيديو (اختياري)
-            </label>
-            <input
-              id="video-caption"
-              type="text"
-              maxLength={120}
-              disabled={videoAtLimit || isSuspended}
-              value={videoCaption}
-              onChange={(e) => setVideoCaption(e.target.value)}
-              placeholder="وصف مختصر للفيديو (حتى 120 حرفاً)"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100"
-            />
-          </div>
-
-          {videoError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {videoError}
+        <CardContent className="space-y-4">
+          {imageAtLimit && (
+            <div className="rounded-[4px] border border-warning/40 bg-warning-muted p-3 text-xs text-text">
+              لقد وصلتِ إلى الحد الأقصى للصور المسموح بها (<span className="font-latin font-bold">{imageLimit}</span>). احذفي صورة حالية لإضافة صور جديدة.
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={addingVideo || videoAtLimit || isSuspended}
-            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {addingVideo ? "جارٍ الإضافة..." : "إضافة فيديو"}
-          </button>
-        </form>
+          {imageError && (
+            <div className="rounded-[4px] border border-danger/30 bg-danger-muted p-3 text-xs text-danger">
+              {imageError}
+            </div>
+          )}
 
-        {videos.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-            لا توجد فيديوهات مضافة بعد.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {videos.map((vid, index) => {
-              const isBusy = busyId === vid.id;
-              const isEditingCaption = editingCaptionId === vid.id;
-              return (
+          {/* Pending Uploads Progress */}
+          {pendingUploads.length > 0 && (
+            <div className="space-y-2">
+              {pendingUploads.map((item) => (
                 <div
-                  key={vid.id}
-                  className="rounded-lg border border-gray-200 p-3"
+                  key={item.localId}
+                  className="flex items-center gap-3 rounded-[4px] border border-border bg-surface-muted p-2.5 text-xs"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.previewUrl}
+                    alt={item.fileName}
+                    className="h-12 w-12 shrink-0 rounded-[2px] object-cover border border-border"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-text">{item.fileName}</p>
+                    {item.status === "error" ? (
+                      <p className="text-xs text-danger">{item.error}</p>
+                    ) : (
+                      <>
+                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-[2px] bg-surface border border-border">
+                          <div
+                            className="h-full bg-text transition-all duration-150"
+                            style={{ width: `${item.progress}%` }}
+                          />
+                        </div>
+                        <p className="mt-0.5 text-[10px] text-text-muted font-latin">
+                          {item.status === "saving" ? "Saving..." : `${item.progress}%`}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Images Grid */}
+          {images.length === 0 ? (
+            <EmptyState
+              icon={<ImageIcon className="h-6 w-6" weight="light" />}
+              title="لا توجد صور في المعرض بعد"
+              description="أضيفي صوراً حقيقية وعالية الجودة من أعمالكِ السابقة لجذب العرائس."
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {images.map((img, index) => {
+                const src =
+                  resolveCloudinaryDisplayUrl({
+                    publicId: img.cloudinaryPublicId,
+                    fallbackUrl: img.url,
+                    preset: "card",
+                    cloudName,
+                  }) ?? img.url;
+                const isBusy = busyId === img.id;
+                const isEditingCaption = editingCaptionId === img.id;
+
+                return (
+                  <div
+                    key={img.id}
+                    className="overflow-hidden rounded-[4px] border border-border bg-surface-raised"
+                  >
+                    <div className="relative aspect-[4/3] w-full bg-surface-muted">
+                      <Image
+                        src={src}
+                        alt={img.caption || "صورة من المعرض"}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    </div>
+
+                    <div className="space-y-2 p-3 text-xs">
+                      {isEditingCaption && !isSuspended ? (
+                        <div className="space-y-2">
+                          <Input
+                            type="text"
+                            maxLength={120}
+                            value={captionDraft}
+                            onChange={(e) => setCaptionDraft(e.target.value)}
+                            placeholder="وصف مختصر (اختياري، 120 حرف)"
+                            className="h-9 text-xs"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={isBusy}
+                              onClick={() => handleSaveCaption(img.id, true)}
+                            >
+                              حفظ
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setEditingCaptionId(null)}
+                            >
+                              إلغاء
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="min-h-[1.25rem] text-text-muted text-xs">
+                          {img.caption || (
+                            <span className="text-text-muted/50 italic">بدون تعليق</span>
+                          )}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between border-t border-border pt-2">
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            iconOnly
+                            disabled={isSuspended || isBusy || index === 0}
+                            onClick={() => handleReorder(img.id, "up", true)}
+                            aria-label="تحريك لأعلى"
+                            className="h-8 w-8 min-h-[32px] min-w-[32px]"
+                          >
+                            <CaretUp className="h-3.5 w-3.5" weight="bold" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            iconOnly
+                            disabled={
+                              isSuspended || isBusy || index === images.length - 1
+                            }
+                            onClick={() => handleReorder(img.id, "down", true)}
+                            aria-label="تحريك لأسفل"
+                            className="h-8 w-8 min-h-[32px] min-w-[32px]"
+                          >
+                            <CaretDown className="h-3.5 w-3.5" weight="bold" />
+                          </Button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={isSuspended || isBusy}
+                            onClick={() => {
+                              setEditingCaptionId(img.id);
+                              setCaptionDraft(img.caption ?? "");
+                            }}
+                          >
+                            التعليق
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="danger-outline"
+                            size="sm"
+                            disabled={isSuspended || isBusy}
+                            onClick={() => handleDelete(img.id, true)}
+                          >
+                            حذف
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Videos Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>روابط الفيديو</CardTitle>
+          <CardDescription>
+            استخدمت <span className="font-latin font-bold text-text">{videos.length}</span> من أصل{" "}
+            <span className="font-latin font-bold text-text">{videoLimit}</span> مقاطع فيديو (YouTube أو Facebook أو Instagram).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {videoAtLimit && (
+            <div className="rounded-[4px] border border-warning/40 bg-warning-muted p-3 text-xs text-text">
+              لقد وصلتِ إلى الحد الأقصى للفيديوهات المسموح بها (<span className="font-latin font-bold">{videoLimit}</span>). احذفي فيديو حالياً لإضافة رابط جديد.
+            </div>
+          )}
+
+          <form onSubmit={handleAddVideo} className="space-y-3">
+            <Field label="رابط الفيديو" required>
+              <Input
+                type="url"
+                required
+                disabled={videoAtLimit || isSuspended || addingVideo}
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                dir="ltr"
+              />
+            </Field>
+
+            <Field label="تعليق أو عنوان للفيديو (اختياري)">
+              <Input
+                type="text"
+                maxLength={120}
+                disabled={videoAtLimit || isSuspended || addingVideo}
+                value={videoCaption}
+                onChange={(e) => setVideoCaption(e.target.value)}
+                placeholder="مثال: لقطات من زفاف في قاعة اللؤلؤة"
+              />
+            </Field>
+
+            {videoError && (
+              <div className="rounded-[4px] border border-danger/30 bg-danger-muted p-2.5 text-xs text-danger">
+                {videoError}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={videoAtLimit || isSuspended}
+              loading={addingVideo}
+              variant="primary"
+            >
+              إضافة رابط الفيديو
+            </Button>
+          </form>
+
+          {/* Videos List */}
+          {videos.length === 0 ? (
+            <EmptyState
+              icon={<FilmStrip className="h-6 w-6" weight="light" />}
+              title="لا توجد روابط فيديو بعد"
+              description="أضيفي روابط لمقاطع فيديو من حفلات زفاف وثقتيها على يوتيوب أو فيسبوك."
+              className="mt-6"
+            />
+          ) : (
+            <div className="mt-6 space-y-3">
+              {videos.map((vid, index) => {
+                const isBusy = busyId === vid.id;
+                return (
+                  <div
+                    key={vid.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-border bg-surface-raised p-4 text-xs"
+                  >
                     <div className="min-w-0 flex-1">
                       <a
                         href={vid.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         dir="ltr"
-                        className="block truncate text-sm font-medium text-blue-600 hover:underline"
+                        className="block truncate font-mono text-accent-text hover:underline"
                       >
                         {vid.url}
                       </a>
-                      {isEditingCaption && !isSuspended ? (
-                        <div className="mt-2 space-y-2">
-                          <input
-                            type="text"
-                            maxLength={120}
-                            value={captionDraft}
-                            onChange={(e) => setCaptionDraft(e.target.value)}
-                            className="block w-full rounded border border-gray-300 px-2.5 py-1.5 text-xs"
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              disabled={isBusy}
-                              onClick={() => handleSaveCaption(vid.id, false)}
-                              className="rounded bg-blue-600 px-2.5 py-1 text-xs font-medium text-white"
-                            >
-                              حفظ
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingCaptionId(null)}
-                              className="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-700"
-                            >
-                              إلغاء
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        vid.caption && (
-                          <p className="mt-1 text-xs text-gray-700">
-                            {vid.caption}
-                          </p>
-                        )
-                      )}
+                      <p className="mt-1 text-text-muted">
+                        {vid.caption || <span className="italic">بدون تعليق</span>}
+                      </p>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      <button
+                    <div className="flex items-center gap-2">
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
+                        iconOnly
                         disabled={isSuspended || isBusy || index === 0}
                         onClick={() => handleReorder(vid.id, "up", false)}
-                        aria-label="تحريك لأعلى"
-                        className="rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-40"
+                        className="h-8 w-8 min-h-[32px] min-w-[32px]"
                       >
-                        ↑
-                      </button>
-                      <button
+                        <CaretUp className="h-3.5 w-3.5" weight="bold" />
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
+                        iconOnly
                         disabled={
                           isSuspended || isBusy || index === videos.length - 1
                         }
                         onClick={() => handleReorder(vid.id, "down", false)}
-                        aria-label="تحريك لأسفل"
-                        className="rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-40"
+                        className="h-8 w-8 min-h-[32px] min-w-[32px]"
                       >
-                        ↓
-                      </button>
+                        <CaretDown className="h-3.5 w-3.5" weight="bold" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="danger-outline"
+                        size="sm"
+                        disabled={isSuspended || isBusy}
+                        onClick={() => handleDelete(vid.id, false)}
+                      >
+                        حذف
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="mt-2 flex gap-2 border-t border-gray-100 pt-2">
-                    <button
-                      type="button"
-                      disabled={isSuspended || isBusy}
-                      onClick={() => {
-                        setEditingCaptionId(vid.id);
-                        setCaptionDraft(vid.caption ?? "");
-                      }}
-                      className="rounded border border-gray-300 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      تعديل التعليق
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSuspended || isBusy}
-                      onClick={() => handleDelete(vid.id, false)}
-                      className="rounded border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700 hover:bg-red-100 disabled:opacity-50"
-                    >
-                      حذف
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
