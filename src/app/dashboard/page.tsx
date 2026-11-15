@@ -4,10 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { requireProviderPage } from "@/lib/provider-dashboard";
 import { getProviderLimits } from "@/lib/limits";
 import { DISTRICT_LABELS } from "@/lib/districts";
+import { getProviderStatsSummary } from "@/lib/provider-stats";
 import { OnboardingForm } from "./onboarding-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProviderStatsCard } from "@/components/dashboard/provider-stats-card";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +39,7 @@ export default async function DashboardPage() {
   }
 
   const now = new Date();
-  const [offerCount, imageCount, videoCount, activeSubscription] =
+  const [offerCount, imageCount, videoCount, activeSubscription, stats] =
     await Promise.all([
       prisma.offer.count({ where: { providerId: provider.id } }),
       prisma.media.count({ where: { providerId: provider.id, type: "IMAGE" } }),
@@ -51,6 +53,7 @@ export default async function DashboardPage() {
         },
         orderBy: { endsAt: "desc" },
       }),
+      getProviderStatsSummary(provider.id),
     ]);
 
   const limits = getProviderLimits(provider);
@@ -155,6 +158,9 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 30-Day Activity & Engagement Stats */}
+      <ProviderStatsCard stats={stats} />
 
       {/* Subscription Card */}
       <Card>

@@ -37,6 +37,9 @@ async function main() {
 
   // 3. Delete in safe relational order
   if (demoProviderIds.length > 0) {
+    const deletedStats = await prisma.providerDailyStat.deleteMany({
+      where: { providerId: { in: demoProviderIds } },
+    });
     const deletedDates = await prisma.blockedDate.deleteMany({
       where: { providerId: { in: demoProviderIds } },
     });
@@ -60,7 +63,7 @@ async function main() {
     });
 
     console.log(
-      `Deleted relations: ${deletedSubs.count} subscriptions, ${deletedPC.count} categories, ${deletedOffers.count} offers, ${deletedMedia.count} media.`
+      `Deleted relations: ${deletedSubs.count} subscriptions, ${deletedPC.count} categories, ${deletedOffers.count} offers, ${deletedMedia.count} media, ${deletedStats.count} daily stats.`
     );
   }
 

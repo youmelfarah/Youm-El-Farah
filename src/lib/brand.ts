@@ -10,14 +10,14 @@ export const brand = {
   tagline: "كل ما تحتاجه العروسة في مكان واحد",
   description: "دليلك الشامل لخدمات وأفراح بني سويف - تصفحي، قارني، واختاري أفضل مقدمي الخدمات.",
   contact: {
-    phone: "",
+    phone: "+201275729927",
     email: "",
-    whatsapp: "",
+    whatsapp: "+201275729927",
     address: "",
   },
   social: {
-    instagram: "",
-    facebook: "",
+    facebook: "", // رابط فيسبوك (مثال: https://facebook.com/...)
+    instagram: "", // رابط انستجرام (مثال: https://instagram.com/...)
     tiktok: "",
   },
 } as const;

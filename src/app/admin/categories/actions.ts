@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { AuthError, requireRoleAction } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { revalidateCategories, revalidateMarketplace } from "@/lib/revalidate";
 
 const idSchema = z.string().trim().min(1, "معرف غير صالح");
 
@@ -88,6 +89,8 @@ export async function createCategoryAction(
     });
 
     revalidatePath("/admin/categories");
+    revalidateCategories();
+    revalidateMarketplace();
     return { ok: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "حدث خطأ أثناء إنشاء الفئة" };
@@ -139,6 +142,8 @@ export async function updateCategoryAction(
     });
 
     revalidatePath("/admin/categories");
+    revalidateCategories();
+    revalidateMarketplace();
     return { ok: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "حدث خطأ أثناء تعديل الفئة" };
@@ -217,6 +222,8 @@ export async function reorderCategoryAction(input: {
     });
 
     revalidatePath("/admin/categories");
+    revalidateCategories();
+    revalidateMarketplace();
     return { ok: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "حدث خطأ أثناء إعادة الترتيب" };
@@ -268,6 +275,8 @@ export async function toggleCategoryActiveAction(input: {
     });
 
     revalidatePath("/admin/categories");
+    revalidateCategories();
+    revalidateMarketplace();
     return { ok: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "حدث خطأ أثناء تغيير حالة الفئة" };
@@ -325,6 +334,8 @@ export async function deleteCategoryAction(input: {
     });
 
     revalidatePath("/admin/categories");
+    revalidateCategories();
+    revalidateMarketplace();
     return { ok: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "حدث خطأ أثناء حذف الفئة" };

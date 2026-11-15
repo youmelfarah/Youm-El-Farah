@@ -9,6 +9,7 @@ import {
 } from "@/lib/cairo-time";
 import { formatArabicDateString } from "@/lib/calendar-dates";
 import { getSubscriptionState } from "@/lib/subscription";
+import { getProviderStatsSummary } from "@/lib/provider-stats";
 import { ProviderDetailClient } from "./provider-detail-client";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export default async function ProviderDetailPage(props: {
 
   const { id } = await props.params;
 
-  const [provider, offersCount, imagesCount, videosCount, blockedDatesCount, auditLogs] =
+  const [provider, offersCount, imagesCount, videosCount, blockedDatesCount, auditLogs, stats] =
     await Promise.all([
       prisma.provider.findUnique({
         where: { id },
@@ -63,6 +64,7 @@ export default async function ProviderDetailPage(props: {
           admin: { select: { name: true } },
         },
       }),
+      getProviderStatsSummary(id),
     ]);
 
   if (!provider) {
@@ -159,6 +161,7 @@ export default async function ProviderDetailPage(props: {
           createdAtFormatted: formatArabicDateString(toCairoDateString(log.createdAt)),
           details: log.details,
         })),
+        stats,
       }}
     />
   );

@@ -170,6 +170,7 @@ model Provider {
   adminNotes    String?        @db.Text
   averageRating Float          @default(0)
   reviewCount   Int            @default(0)
+  rankScore     Float          @default(4)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -183,9 +184,11 @@ model Provider {
   reviews       Review[]
   favorites     Favorite[]
   auditLogs     AuditLog[]
+  dailyStats    ProviderDailyStat[]
 
   @@index([district])
   @@index([status])
+  @@index([rankScore])
 }
 
 model ProviderCategory {
@@ -235,6 +238,20 @@ model BlockedDate {
   providerId String
   date       DateTime @db.Date
   note       String?
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, date])
+  @@index([date])
+}
+
+model ProviderDailyStat {
+  id             String   @id @default(cuid())
+  providerId     String
+  date           DateTime @db.Date // a Cairo calendar day
+  views          Int      @default(0)
+  whatsappClicks Int      @default(0)
+  callClicks     Int      @default(0)
 
   provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 

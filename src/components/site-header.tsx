@@ -27,12 +27,15 @@ export function SiteHeader() {
   const { data: session, isPending } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-  // DashboardShell and Admin layout render their own dedicated headers
+  // Dashboard, Admin, and Public Marketplace render their own dedicated headers
   if (
     pathname === "/dashboard" ||
     pathname.startsWith("/dashboard/") ||
     pathname === "/admin" ||
-    pathname.startsWith("/admin/")
+    pathname.startsWith("/admin/") ||
+    pathname === "/services" ||
+    pathname.startsWith("/services/") ||
+    pathname.startsWith("/providers/")
   ) {
     return null;
   }

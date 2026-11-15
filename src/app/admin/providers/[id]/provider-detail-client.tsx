@@ -9,8 +9,10 @@ import { AdminInput, AdminSelect, AdminTextarea } from "@/components/ui/input";
 import { AdminBadge } from "@/components/ui/badge";
 import { AdminTable, AdminTableBody, AdminTableHead, AdminTd, AdminTh } from "@/components/ui/table";
 import { WhatsAppReminderButton } from "@/components/admin/whatsapp-reminder-button";
+import { CopyReportButton } from "@/components/admin/copy-report-button";
 import { ABSOLUTE_MAX, DEFAULT_LIMITS } from "@/lib/limits";
 import { formatArabicDateString } from "@/lib/calendar-dates";
+import type { ProviderStatsSummary } from "@/lib/provider-stats";
 import {
   approveProviderAction,
   cancelProviderSubscriptionAction,
@@ -91,6 +93,7 @@ interface ProviderDetailProps {
       createdAtFormatted: string;
       details: any;
     }>;
+    stats?: ProviderStatsSummary;
   };
 }
 
@@ -435,6 +438,166 @@ export function ProviderDetailClient({ provider }: ProviderDetailProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Column (2 cols on desktop) */}
         <div className="space-y-6 lg:col-span-2">
+          {/* Activity & Performance Stats Card */}
+          {provider.stats && (
+            <AdminCard>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
+                <div>
+                  <h2 className="font-bold text-sm text-text">إحصائيات النشاط والتفاعل (آخر 30 يوماً)</h2>
+                  <p className="text-xs text-text-muted">مؤشرات زيارات ملف مقدم الخدمة ونقرات التواصل</p>
+                </div>
+                <CopyReportButton
+                  name={provider.name}
+                  views={provider.stats.last30Days.views}
+                  whatsapp={provider.stats.last30Days.whatsappClicks}
+                  call={provider.stats.last30Days.callClicks}
+                />
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-border bg-surface-muted/30 p-3">
+                    <span className="text-xs text-text-muted">زيارات الملف</span>
+                    <p className="font-latin text-xl font-bold text-text mt-1">
+                      {provider.stats.last30Days.views}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-surface-muted/30 p-3">
+                    <span className="text-xs text-text-muted">نقرات واتساب</span>
+                    <p className="font-latin text-xl font-bold text-success mt-1">
+                      {provider.stats.last30Days.whatsappClicks}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-surface-muted/30 p-3">
+                    <span className="text-xs text-text-muted">نقرات الاتصال</span>
+                    <p className="font-latin text-xl font-bold text-accent-text mt-1">
+                      {provider.stats.last30Days.callClicks}
+                    </p>
+                  </div>
+                </div>
+
+                {/* CSS comparison bars: This month vs Last month */}
+                <div className="rounded-lg border border-border bg-surface-muted/50 p-3 text-xs space-y-3">
+                  <div className="flex items-center justify-between font-semibold border-b border-border/60 pb-1.5">
+                    <span>مقارنة هذا الشهر بالشهر السابق</span>
+                    <span className="text-[11px] text-text-muted">
+                      هذا الشهر (غامق) / الشهر السابق (فاتح)
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between text-[11px] mb-0.5">
+                        <span>الزيارات</span>
+                        <span className="font-latin">
+                          {provider.stats.thisMonth.views} / {provider.stats.lastMonth.views}
+                        </span>
+                      </div>
+                      <div className="flex h-2 w-full gap-1 rounded bg-surface">
+                        <div
+                          className="bg-text h-full rounded"
+                          style={{
+                            width: `${Math.round(
+                              (provider.stats.thisMonth.views /
+                                Math.max(1, provider.stats.thisMonth.views, provider.stats.lastMonth.views)) *
+                                100
+                            )}%`,
+                          }}
+                        />
+                        <div
+                          className="bg-border-strong h-full rounded"
+                          style={{
+                            width: `${Math.round(
+                              (provider.stats.lastMonth.views /
+                                Math.max(1, provider.stats.thisMonth.views, provider.stats.lastMonth.views)) *
+                                100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-[11px] mb-0.5">
+                        <span>نقرات واتساب</span>
+                        <span className="font-latin">
+                          {provider.stats.thisMonth.whatsappClicks} / {provider.stats.lastMonth.whatsappClicks}
+                        </span>
+                      </div>
+                      <div className="flex h-2 w-full gap-1 rounded bg-surface">
+                        <div
+                          className="bg-success h-full rounded"
+                          style={{
+                            width: `${Math.round(
+                              (provider.stats.thisMonth.whatsappClicks /
+                                Math.max(
+                                  1,
+                                  provider.stats.thisMonth.whatsappClicks,
+                                  provider.stats.lastMonth.whatsappClicks
+                                )) *
+                                100
+                            )}%`,
+                          }}
+                        />
+                        <div
+                          className="bg-border-strong h-full rounded"
+                          style={{
+                            width: `${Math.round(
+                              (provider.stats.lastMonth.whatsappClicks /
+                                Math.max(
+                                  1,
+                                  provider.stats.thisMonth.whatsappClicks,
+                                  provider.stats.lastMonth.whatsappClicks
+                                )) *
+                                100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-[11px] mb-0.5">
+                        <span>نقرات الاتصال</span>
+                        <span className="font-latin">
+                          {provider.stats.thisMonth.callClicks} / {provider.stats.lastMonth.callClicks}
+                        </span>
+                      </div>
+                      <div className="flex h-2 w-full gap-1 rounded bg-surface">
+                        <div
+                          className="bg-accent-text h-full rounded"
+                          style={{
+                            width: `${Math.round(
+                              (provider.stats.thisMonth.callClicks /
+                                Math.max(
+                                  1,
+                                  provider.stats.thisMonth.callClicks,
+                                  provider.stats.lastMonth.callClicks
+                                )) *
+                                100
+                            )}%`,
+                          }}
+                        />
+                        <div
+                          className="bg-border-strong h-full rounded"
+                          style={{
+                            width: `${Math.round(
+                              (provider.stats.lastMonth.callClicks /
+                                Math.max(
+                                  1,
+                                  provider.stats.thisMonth.callClicks,
+                                  provider.stats.lastMonth.callClicks
+                                )) *
+                                100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </AdminCard>
+          )}
+
           {/* Profile Summary (Read-only) */}
           <AdminCard>
             <AdminCardHeader title="الملف التعريفي" subtitle="بيانات النشاط ووسائل التواصل" />

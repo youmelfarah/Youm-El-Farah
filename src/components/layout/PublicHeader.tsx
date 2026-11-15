@@ -13,80 +13,96 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Container } from "@/components/ui/container";
+import { WeddingDatePicker } from "@/components/wedding-date/wedding-date-picker";
 import { cn } from "@/lib/cn";
 
 export interface PublicHeaderProps {
   variant?: "solid" | "transparent";
+  initialWeddingDate?: string | null;
 }
 
 const navLinks = [
-  { href: "#venues", label: "القاعات" },
-  { href: "#photography", label: "المصورين" },
-  { href: "#dresses", label: "فساتين الزفاف" },
-  { href: "#beauty", label: "الميك أب والشعر" },
-  { href: "#about", label: "عن يوم الفرح" },
+  { href: "/services", label: "جميع الخدمات" },
+  { href: "/services/venues", label: "القاعات" },
+  { href: "/services/photographer", label: "المصورين" },
+  { href: "/services/makeup-artist", label: "الميك أب" },
+  { href: "/services/atelier", label: "الفساتين" },
 ];
 
-export function PublicHeader({ variant = "solid" }: PublicHeaderProps) {
+export function PublicHeader({
+  variant = "solid",
+  initialWeddingDate = null,
+}: PublicHeaderProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [weddingDate, setWeddingDate] = React.useState<string | null>(initialWeddingDate);
+
+  React.useEffect(() => {
+    setWeddingDate(initialWeddingDate);
+  }, [initialWeddingDate]);
 
   return (
     <header
       className={cn(
         "sticky top-0 z-40 w-full transition-colors duration-200",
         variant === "solid"
-          ? "border-b border-border bg-surface/95 backdrop-blur-xs"
-          : "border-b border-white/10 bg-surface/80"
+          ? "border-b border-border bg-surface/95 backdrop-blur-xs text-text"
+          : "border-b border-white/10 bg-transparent text-white"
       )}
     >
-      <Container className="flex h-16 items-center justify-between gap-4">
+      <Container className="flex h-16 items-center justify-between gap-3">
         {/* Logo */}
-        <Logo href="/" variant="horizontal" size="sm" />
+        <div className="shrink-0">
+          <Logo href="/" variant="horizontal" size="sm" />
+        </div>
 
         {/* Desktop Nav */}
         <nav
           aria-label="القائمة الرئيسية"
-          className="hidden md:flex items-center gap-6 text-sm"
+          className="hidden lg:flex items-center gap-5 text-sm"
         >
           {navLinks.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="text-text-muted hover:text-text transition-colors"
+              className={cn(
+                "transition-colors",
+                variant === "transparent"
+                  ? "text-white/80 hover:text-white"
+                  : "text-text-muted hover:text-text"
+              )}
             >
               {link.label}
             </Link>
           ))}
         </nav>
 
-        {/* CTA & Actions */}
-        <div className="flex items-center gap-3">
+        {/* Wedding Date Picker + Actions */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Wedding Date Flow Picker */}
+          <WeddingDatePicker
+            currentDate={weddingDate}
+            onSelectDate={(d) => setWeddingDate(d)}
+            onClearDate={() => setWeddingDate(null)}
+            variant={variant}
+          />
+
           <Button
             asChild
-            variant="ghost"
+            variant={variant === "transparent" ? "secondary" : "ghost"}
             size="sm"
             className="hidden sm:inline-flex text-xs min-h-[44px]"
           >
             <Link href="/login">تسجيل الدخول</Link>
           </Button>
 
-          <Button
-            asChild
-            variant="primary"
-            size="sm"
-            className="hidden sm:inline-flex text-xs min-h-[44px]"
-          >
-            <Link href="/login">انضم كمقدم خدمة</Link>
-          </Button>
-
           {/* Mobile Menu Drawer */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button
-                variant="ghost"
+                variant={variant === "transparent" ? "outline" : "ghost"}
                 size="icon"
-                className="md:hidden h-11 w-11 min-h-[44px] min-w-[44px]"
-                aria-label="فتح القائمة"
+                className="lg:hidden h-11 w-11 min-h-[44px] min-w-[44px]"
+                aria-label="فتح القائمة الرئيسية"
               >
                 <List className="h-5 w-5" weight="light" />
               </Button>
@@ -98,7 +114,23 @@ export function PublicHeader({ variant = "solid" }: PublicHeaderProps) {
                 </SheetTitle>
               </SheetHeader>
 
-              <nav className="flex flex-col gap-1 text-sm mt-4">
+              <div className="py-2">
+                <p className="text-xs text-text-muted mb-2">تاريخ زفافكِ:</p>
+                <WeddingDatePicker
+                  currentDate={weddingDate}
+                  onSelectDate={(d) => {
+                    setWeddingDate(d);
+                    setIsOpen(false);
+                  }}
+                  onClearDate={() => {
+                    setWeddingDate(null);
+                    setIsOpen(false);
+                  }}
+                  className="w-full justify-start"
+                />
+              </div>
+
+              <nav className="flex flex-col gap-1 text-sm border-t border-border pt-3">
                 {navLinks.map((link) => (
                   <Link
                     key={link.label}

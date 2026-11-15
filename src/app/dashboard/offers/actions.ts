@@ -6,6 +6,7 @@ import { getProviderLimits } from "@/lib/limits";
 import { prisma } from "@/lib/prisma";
 import { requireOwnedProviderAction } from "@/lib/provider-dashboard";
 import { normalizePlainText } from "@/lib/validation";
+import { revalidateProvider } from "@/lib/revalidate";
 
 const priceInputSchema = z
   .union([z.string(), z.number(), z.null(), z.undefined()])
@@ -105,6 +106,7 @@ export async function createOfferAction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/offers");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -150,6 +152,7 @@ export async function updateOfferAction(input: {
   });
 
   revalidatePath("/dashboard/offers");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -188,6 +191,7 @@ export async function toggleOfferActiveAction(input: {
   });
 
   revalidatePath("/dashboard/offers");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -220,6 +224,7 @@ export async function deleteOfferAction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/offers");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -272,6 +277,7 @@ export async function reorderOfferAction(input: {
   );
 
   revalidatePath("/dashboard/offers");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 

@@ -10,6 +10,7 @@ import { getProviderLimits } from "@/lib/limits";
 import { prisma } from "@/lib/prisma";
 import { requireOwnedProviderAction } from "@/lib/provider-dashboard";
 import { normalizeVideoUrl } from "@/lib/validation";
+import { revalidateProvider } from "@/lib/revalidate";
 
 const captionSchema = z
   .string()
@@ -83,6 +84,7 @@ export async function addGalleryImageAction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/gallery");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -138,6 +140,7 @@ export async function addGalleryVideoAction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/gallery");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -178,6 +181,7 @@ export async function updateMediaCaptionAction(input: {
   });
 
   revalidatePath("/dashboard/gallery");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -231,6 +235,7 @@ export async function deleteMediaAction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/gallery");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -298,6 +303,7 @@ export async function reorderMediaAction(input: {
   );
 
   revalidatePath("/dashboard/gallery");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 

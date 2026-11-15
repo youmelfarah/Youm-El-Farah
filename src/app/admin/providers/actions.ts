@@ -6,6 +6,7 @@ import { AuthError, requireRoleAction } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { ABSOLUTE_MAX } from "@/lib/limits";
 import { cancelSubscription, createSubscription } from "@/lib/subscription";
+import { revalidateProvider } from "@/lib/revalidate";
 import { PaymentMethod } from "@prisma/client";
 
 const idSchema = z.string().trim().min(1, "معرف غير صالح");
@@ -73,10 +74,11 @@ export async function approveProviderAction(input: {
   if (!parsedId.success) return { error: "معرف غير صالح" };
 
   try {
+    let targetSlug = "";
     await prisma.$transaction(async (tx) => {
       const provider = await tx.provider.findUnique({
         where: { id: parsedId.data },
-        select: { id: true, status: true },
+        select: { id: true, status: true, slug: true },
       });
 
       if (!provider) {
@@ -86,6 +88,8 @@ export async function approveProviderAction(input: {
       if (provider.status === "APPROVED") {
         throw new Error("المقدم معتمد بالفعل");
       }
+
+      targetSlug = provider.slug;
 
       await tx.provider.update({
         where: { id: parsedId.data },
@@ -107,6 +111,9 @@ export async function approveProviderAction(input: {
       });
     });
 
+    if (targetSlug) {
+      revalidateProvider(targetSlug, parsedId.data);
+    }
     revalidatePath("/admin/providers");
     revalidatePath(`/admin/providers/${parsedId.data}`);
     revalidatePath("/admin");
@@ -132,10 +139,11 @@ export async function suspendProviderAction(input: {
   if (!parsedId.success) return { error: "معرف غير صالح" };
 
   try {
+    let targetSlug = "";
     await prisma.$transaction(async (tx) => {
       const provider = await tx.provider.findUnique({
         where: { id: parsedId.data },
-        select: { id: true, status: true },
+        select: { id: true, status: true, slug: true },
       });
 
       if (!provider) {
@@ -145,6 +153,8 @@ export async function suspendProviderAction(input: {
       if (provider.status === "SUSPENDED") {
         throw new Error("المقدم موقوف بالفعل");
       }
+
+      targetSlug = provider.slug;
 
       await tx.provider.update({
         where: { id: parsedId.data },
@@ -167,6 +177,9 @@ export async function suspendProviderAction(input: {
       });
     });
 
+    if (targetSlug) {
+      revalidateProvider(targetSlug, parsedId.data);
+    }
     revalidatePath("/admin/providers");
     revalidatePath(`/admin/providers/${parsedId.data}`);
     revalidatePath("/admin");
@@ -191,10 +204,11 @@ export async function reactivateProviderAction(input: {
   if (!parsedId.success) return { error: "معرف غير صالح" };
 
   try {
+    let targetSlug = "";
     await prisma.$transaction(async (tx) => {
       const provider = await tx.provider.findUnique({
         where: { id: parsedId.data },
-        select: { id: true, status: true },
+        select: { id: true, status: true, slug: true },
       });
 
       if (!provider) {
@@ -204,6 +218,8 @@ export async function reactivateProviderAction(input: {
       if (provider.status === "APPROVED") {
         throw new Error("المقدم مفعّل بالفعل");
       }
+
+      targetSlug = provider.slug;
 
       await tx.provider.update({
         where: { id: parsedId.data },
@@ -225,6 +241,9 @@ export async function reactivateProviderAction(input: {
       });
     });
 
+    if (targetSlug) {
+      revalidateProvider(targetSlug, parsedId.data);
+    }
     revalidatePath("/admin/providers");
     revalidatePath(`/admin/providers/${parsedId.data}`);
     revalidatePath("/admin");
@@ -391,6 +410,14 @@ export async function createProviderSubscriptionAction(
       planName: parsed.data.planName,
     });
 
+    const prov = await prisma.provider.findUnique({
+      where: { id: parsed.data.providerId },
+      select: { slug: true },
+    });
+    if (prov) {
+      revalidateProvider(prov.slug, parsed.data.providerId);
+    }
+
     revalidatePath("/admin");
     revalidatePath("/admin/providers");
     revalidatePath(`/admin/providers/${parsed.data.providerId}`);
@@ -422,6 +449,14 @@ export async function cancelProviderSubscriptionAction(input: {
       adminId: session.user.id,
       reason: input.reason?.trim() || null,
     });
+
+    const prov = await prisma.provider.findUnique({
+      where: { id: sub.providerId },
+      select: { slug: true },
+    });
+    if (prov) {
+      revalidateProvider(prov.slug, sub.providerId);
+    }
 
     revalidatePath("/admin");
     revalidatePath("/admin/providers");

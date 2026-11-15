@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { El_Messiri, IBM_Plex_Sans_Arabic, Cormorant_Garamond } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/toast";
@@ -28,8 +28,17 @@ const cormorant = Cormorant_Garamond({
   variable: "--font-display-latin",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#17120F",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
-  title: "يوم الفرح - دليل خدمات الأفراح في بني سويف",
+  title: {
+    default: "يوم الفرح - دليل خدمات الأفراح في بني سويف",
+    template: "%s | يوم الفرح",
+  },
   description:
     "يوم الفرح هو دليلك الشامل لخدمات الأفراح في بني سويف. تصفحي، قارني، واختاري أفضل مقدمي خدمات الزفاف.",
 };

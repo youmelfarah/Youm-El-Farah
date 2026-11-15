@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { revalidateProvider } from "@/lib/revalidate";
 import {
   addMonthsToDateString,
   dateStringToPrismaDate,
@@ -77,6 +78,7 @@ export async function blockDates(
   });
 
   revalidatePath("/dashboard/availability");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -103,6 +105,7 @@ export async function unblockDates(
   });
 
   revalidatePath("/dashboard/availability");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 

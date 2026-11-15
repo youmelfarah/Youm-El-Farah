@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { revalidateProvider } from "@/lib/revalidate";
 import {
   destroyCloudinaryImage,
   verifyUploadedProviderImage,
@@ -138,6 +139,7 @@ export async function updateProfileAction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
@@ -196,6 +198,7 @@ export async function saveProviderImageAction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { publicId: verified.publicId, secureUrl: verified.secureUrl };
 }
 
@@ -244,6 +247,7 @@ export async function deleteProviderImageAction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidateProvider(authResult.provider.slug, authResult.provider.id);
   return { ok: true };
 }
 
