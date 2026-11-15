@@ -2,6 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 
 export interface SectionHeadingProps extends React.HTMLAttributes<HTMLDivElement> {
+  as?: "h1" | "h2" | "h3";
   eyebrow?: string;
   title: string;
   description?: string;
@@ -9,6 +10,7 @@ export interface SectionHeadingProps extends React.HTMLAttributes<HTMLDivElement
 }
 
 export function SectionHeading({
+  as: HeadingTag = "h2",
   eyebrow,
   title,
   description,
@@ -33,9 +35,9 @@ export function SectionHeading({
           {eyebrow}
         </span>
       )}
-      <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-text leading-tight">
+      <HeadingTag className="font-display text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-text leading-tight">
         {title}
-      </h2>
+      </HeadingTag>
       {description && (
         <p className="text-sm sm:text-base text-text-muted leading-relaxed">
           {description}

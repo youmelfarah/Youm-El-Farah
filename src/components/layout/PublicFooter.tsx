@@ -1,9 +1,22 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { Container } from "@/components/ui/container";
-import { brand } from "@/lib/brand";
+import { BrandConfigHint } from "@/components/brand/brand-config-hint";
+import { brand, isBrandConfigured } from "@/lib/brand";
+import { navigationContent } from "@/content/navigation";
+import { normalizeWhatsAppDigits } from "@/lib/whatsapp";
 
 export function PublicFooter() {
+  const currentYear = new Date().getFullYear();
+  const content = navigationContent.footer;
+
+  const hasInstagram = isBrandConfigured(brand.instagramUrl);
+  const hasFacebook = isBrandConfigured(brand.facebookUrl);
+  const hasWhatsApp = isBrandConfigured(brand.whatsapp);
+  const waDigits = hasWhatsApp ? normalizeWhatsAppDigits(brand.whatsapp) : null;
+
+  const hasAnySocial = hasInstagram || hasFacebook || Boolean(waDigits);
+
   return (
     <footer
       data-theme="dark"
@@ -15,106 +28,119 @@ export function PublicFooter() {
     >
       <Container className="py-16 sm:py-20 lg:py-24">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5">
-          {/* Brand Col */}
+          {/* Brand Info Col */}
           <div className="flex flex-col gap-4 sm:col-span-2">
             <Logo variant="stacked" size="md" />
             <p className="max-w-sm text-sm text-text-muted leading-relaxed">
-              {brand.description}
+              {content.tagline}
             </p>
-            <span className="font-latin text-xs text-accent-text tracking-wider uppercase mt-2">
-              Beni Suef, Egypt
+            <span className="font-latin text-xs text-accent-text tracking-wider uppercase mt-1">
+              BENI SUEF · WEDDINGS
             </span>
           </div>
 
-          {/* Links Col 1 */}
+          {/* Col 1: الموقع */}
           <div className="flex flex-col gap-3">
             <h4 className="font-display text-sm font-semibold text-text">
-              دليل الخدمات
+              {content.sections.site.title}
             </h4>
-            <ul className="flex flex-col gap-2 text-xs text-text-muted">
-              <li>
-                <Link href="#venues" className="hover:text-text transition-colors">
-                  قاعات الأفراح
-                </Link>
-              </li>
-              <li>
-                <Link href="#photography" className="hover:text-text transition-colors">
-                  المصورين والفيديو
-                </Link>
-              </li>
-              <li>
-                <Link href="#dresses" className="hover:text-text transition-colors">
-                  فساتين وبدلات
-                </Link>
-              </li>
-              <li>
-                <Link href="#beauty" className="hover:text-text transition-colors">
-                  الميك أب والشعر
-                </Link>
-              </li>
+            <ul className="flex flex-col gap-2.5 text-xs text-text-muted">
+              {content.sections.site.links.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="hover:text-text transition-colors inline-block min-h-[28px] py-1"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Links Col 2 */}
+          {/* Col 2: لمقدمي الخدمة */}
           <div className="flex flex-col gap-3">
             <h4 className="font-display text-sm font-semibold text-text">
-              مقدمو الخدمات
+              {content.sections.providers.title}
             </h4>
-            <ul className="flex flex-col gap-2 text-xs text-text-muted">
-              <li>
-                <Link href="/login" className="hover:text-text transition-colors">
-                  انضم كشريك
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="hover:text-text transition-colors">
-                  لوحة الشركاء
-                </Link>
-              </li>
-              <li>
-                <Link href="#pricing" className="hover:text-text transition-colors">
-                  الباقات والاشتراكات
-                </Link>
-              </li>
+            <ul className="flex flex-col gap-2.5 text-xs text-text-muted">
+              {content.sections.providers.links.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="hover:text-text transition-colors inline-block min-h-[28px] py-1"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Links Col 3 */}
+          {/* Col 3: تابعينا */}
           <div className="flex flex-col gap-3">
             <h4 className="font-display text-sm font-semibold text-text">
-              عن المنصة
+              {content.sections.social.title}
             </h4>
-            <ul className="flex flex-col gap-2 text-xs text-text-muted">
-              <li>
-                <Link href="#about" className="hover:text-text transition-colors">
-                  من نحن
-                </Link>
-              </li>
-              <li>
-                <Link href="#faq" className="hover:text-text transition-colors">
-                  الأسئلة الشائعة
-                </Link>
-              </li>
-              <li>
-                <Link href="#contact" className="hover:text-text transition-colors">
-                  تواصل معنا
-                </Link>
-              </li>
-            </ul>
+
+            {hasAnySocial ? (
+              <ul className="flex flex-col gap-2.5 text-xs text-text-muted">
+                {hasInstagram && (
+                  <li>
+                    <a
+                      href={brand.instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-text transition-colors inline-block min-h-[28px] py-1"
+                    >
+                      {content.sections.social.instagramLabel}
+                    </a>
+                  </li>
+                )}
+                {hasFacebook && (
+                  <li>
+                    <a
+                      href={brand.facebookUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-text transition-colors inline-block min-h-[28px] py-1"
+                    >
+                      {content.sections.social.facebookLabel}
+                    </a>
+                  </li>
+                )}
+                {waDigits && (
+                  <li>
+                    <a
+                      href={`https://wa.me/${waDigits}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-text transition-colors inline-block min-h-[28px] py-1"
+                    >
+                      {content.sections.social.whatsappLabel}
+                    </a>
+                  </li>
+                )}
+              </ul>
+            ) : (
+              <div className="text-xs text-text-muted">
+                <BrandConfigHint field="social" />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Small Print Bottom Bar */}
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row text-xs text-text-muted">
           <p>
-            جميع الحقوق محفوظة © 2026 {brand.name.ar}. بني سويف.
+            جميع الحقوق محفوظة © {currentYear} {content.bottom.copyright}. بني سويف.
           </p>
           <div className="flex items-center gap-6">
-            <Link href="#privacy" className="hover:text-text transition-colors">
-              سياسة الخصوصية
+            <Link href="/privacy" className="hover:text-text transition-colors py-1">
+              {content.bottom.privacy}
             </Link>
-            <Link href="#terms" className="hover:text-text transition-colors">
-              شروط الاستخدام
+            <Link href="/terms" className="hover:text-text transition-colors py-1">
+              {content.bottom.terms}
             </Link>
           </div>
         </div>

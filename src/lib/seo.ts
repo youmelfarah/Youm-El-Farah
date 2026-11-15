@@ -22,3 +22,24 @@ export function getBaseAppUrl(): string {
 export function safeJsonLdString(obj: unknown): string {
   return JSON.stringify(obj).replace(/</g, "\\u003c");
 }
+
+/**
+ * Standard Open Graph default values for metadata across public pages.
+ */
+export function getDefaultOpenGraph(overrides?: {
+  title?: string;
+  description?: string;
+  url?: string;
+}) {
+  const baseUrl = getBaseAppUrl();
+  return {
+    title: overrides?.title || "يوم الفرح | دليل خدمات الأفراح في بني سويف",
+    description:
+      overrides?.description ||
+      "قاعات وتصوير وميك أب وتجهيزات، كلها من بني سويف. شوفي المتاح في يوم فرحك، وقارني الأعمال والأسعار.",
+    url: overrides?.url || baseUrl,
+    siteName: "يوم الفرح",
+    locale: "ar_EG",
+    type: "website" as const,
+  };
+}

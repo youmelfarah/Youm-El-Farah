@@ -192,9 +192,10 @@ export default async function CategoryPage({
         dangerouslySetInnerHTML={{ __html: safeJsonLdString(jsonLd) }}
       />
 
-      <Section spacing="sm" className="border-b border-border bg-surface-raised">
+      <Section spacing="none" className="border-b border-border bg-surface-raised py-8 sm:py-10">
         <Container>
           <SectionHeading
+            as="h1"
             eyebrow="CATEGORY DIRECTORY"
             title={`${category.nameAr} في بني سويف`}
             description={`أفضل وأرقى ${category.nameAr} في مختلف مراكز محافظة بني سويف، مع أسعار الباقات وخيارات الحجز المباشر.`}
@@ -210,47 +211,41 @@ export default async function CategoryPage({
         </Container>
       </Section>
 
-      <Section spacing="default">
+      <Section spacing="none" className="pt-6 sm:pt-8 pb-16 sm:pb-24 bg-surface">
         <Container>
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* Desktop Filters Sidebar */}
-            <MarketplaceFilters
-              initialParams={filterParams}
-              totalCount={totalCount}
-              cookieDate={cookieDate}
-            />
+          <MarketplaceFilters
+            initialParams={filterParams}
+            totalCount={totalCount}
+            cookieDate={cookieDate}
+          >
+            {providers.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {providers.map((p, idx) => (
+                    <ProviderCard
+                      key={p.id}
+                      provider={p}
+                      activeDate={activeDate}
+                      priority={idx < 2}
+                    />
+                  ))}
+                </div>
 
-            {/* Main Listing Content */}
-            <div className="flex-1 w-full min-w-0">
-              {providers.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {providers.map((p, idx) => (
-                      <ProviderCard
-                        key={p.id}
-                        provider={p}
-                        activeDate={activeDate}
-                        priority={idx < 2}
-                      />
-                    ))}
-                  </div>
-
-                  <MarketplacePagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    pathname={`/services/${category.slug}`}
-                    searchParams={rawParams as Record<string, string | number | undefined>}
-                  />
-                </>
-              ) : (
-                <ListingEmptyState
-                  isDateExclusion={isDateExclusion}
-                  activeDate={activeDate}
-                  resetUrl={`/services/${category.slug}`}
+                <MarketplacePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pathname={`/services/${category.slug}`}
+                  searchParams={rawParams as Record<string, string | number | undefined>}
                 />
-              )}
-            </div>
-          </div>
+              </>
+            ) : (
+              <ListingEmptyState
+                isDateExclusion={isDateExclusion}
+                activeDate={activeDate}
+                resetUrl={`/services/${category.slug}`}
+              />
+            )}
+          </MarketplaceFilters>
         </Container>
       </Section>
     </>

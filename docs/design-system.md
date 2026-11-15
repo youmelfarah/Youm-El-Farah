@@ -194,7 +194,46 @@
 - الاسم العربي: "يوم الفرح"
 - الاسم اللاتيني: "Youm El-Farah"
 - الشعار اللفظي: "كل ما تحتاجه العروسة في مكان واحد"
-- بيانات التواصل وروابط الشبكات الاجتماعية.
+- بيانات التواصل وروابط الشبكات الاجتماعية وصورة البطل وفريق العمل.
+
+```typescript
+// أمثلة الحقول في src/lib/brand.ts:
+export const brand = {
+  name: {
+    ar: "يوم الفرح",
+    en: "Youm El-Farah",
+  },
+  tagline: "كل ما تحتاجه العروسة في مكان واحد",
+  description: "دليلك الشامل لخدمات وأفراح بني سويف - تصفحي، قارني، واختاري أفضل مقدمي الخدمات.",
+  
+  // معرّف صورة البطل في كلاوديناري (عند تركه فارغاً يُعرض Placeholder الخاص بنظام التصميم)
+  // heroImagePublicId: "youm-el-farah/site/home-hero",
+  heroImagePublicId: "",
+
+  // رقم واتساب الدولي بدون + أو أصفار دولية زائدة (مثال: "201XXXXXXXXX")
+  // whatsapp: "201275729927",
+  whatsapp: "201275729927",
+
+  // روابط الشبكات الاجتماعية (تُخفى تلقائياً في الإنتاج إذا كانت فارغة)
+  // instagramUrl: "https://instagram.com/youmelfarah",
+  instagramUrl: "",
+  // facebookUrl: "https://facebook.com/youmelfarah",
+  facebookUrl: "",
+
+  // البريد الإلكتروني الرسمي للتواصل
+  // contactEmail: "contact@youm-el-farah.com",
+  contactEmail: "",
+
+  // فريق العمل (تظهر فقط في صفحة /about إذا احتوت على عناصر)
+  // team: [
+  //   { name: "سارة أحمد", role: "المؤسس والمدير التنفيذي", photoPublicId: "youm-el-farah/team/sara" },
+  // ],
+  team: [],
+};
+```
+
+> [!NOTE]
+> في بيئة التطوير (`development`)، يظهر تنبيه صغير قابل للإخفاء "اضبطي brand.ts" عند غياب أي حقل اختياري للتذكير بضبطه. في بيئة الإنتاج (`production`)، يُخفى العنصر المرتبط به تماماً بدون ترك أي مساحات فارغة.
 
 ### 2. مكون الشعار الموحد (`src/components/brand/Logo.tsx`):
 - يعتمد كلمة "يوم الفرح" بخط العرض العربي `font-display` (El Messiri 600)، مع شريط لاتيني صغير "YOUM EL-FARAH" بخط Cormorant Garamond بأحرف كبيرة متباعدة (`tracking-[0.18em]`).

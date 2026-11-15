@@ -158,9 +158,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
         dangerouslySetInnerHTML={{ __html: safeJsonLdString(jsonLd) }}
       />
 
-      <Section spacing="sm" className="border-b border-border bg-surface-raised">
+      <Section spacing="none" className="border-b border-border bg-surface-raised py-8 sm:py-10">
         <Container>
           <SectionHeading
+            as="h1"
             eyebrow="BENI SUEF WEDDING MARKETPLACE"
             title="خدمات وتجهيزات الأفراح في بني سويف"
             description="تصفحي وقارني بين نخبة مزودي خدمات الزفاف في جميع مراكز بني سويف، مع أسعار معلنة وتأكيد فوري لتوافر المواعيد."
@@ -175,47 +176,41 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
         </Container>
       </Section>
 
-      <Section spacing="default">
+      <Section spacing="none" className="pt-6 sm:pt-8 pb-16 sm:pb-24 bg-surface">
         <Container>
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* Desktop Filters Sidebar */}
-            <MarketplaceFilters
-              initialParams={params}
-              totalCount={totalCount}
-              cookieDate={cookieDate}
-            />
+          <MarketplaceFilters
+            initialParams={params}
+            totalCount={totalCount}
+            cookieDate={cookieDate}
+          >
+            {providers.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {providers.map((p, idx) => (
+                    <ProviderCard
+                      key={p.id}
+                      provider={p}
+                      activeDate={activeDate}
+                      priority={idx < 2}
+                    />
+                  ))}
+                </div>
 
-            {/* Main Listing Content */}
-            <div className="flex-1 w-full min-w-0">
-              {providers.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {providers.map((p, idx) => (
-                      <ProviderCard
-                        key={p.id}
-                        provider={p}
-                        activeDate={activeDate}
-                        priority={idx < 2}
-                      />
-                    ))}
-                  </div>
-
-                  <MarketplacePagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    pathname="/services"
-                    searchParams={rawParams as Record<string, string | number | undefined>}
-                  />
-                </>
-              ) : (
-                <ListingEmptyState
-                  isDateExclusion={isDateExclusion}
-                  activeDate={activeDate}
-                  resetUrl="/services"
+                <MarketplacePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pathname="/services"
+                  searchParams={rawParams as Record<string, string | number | undefined>}
                 />
-              )}
-            </div>
-          </div>
+              </>
+            ) : (
+              <ListingEmptyState
+                isDateExclusion={isDateExclusion}
+                activeDate={activeDate}
+                resetUrl="/services"
+              />
+            )}
+          </MarketplaceFilters>
         </Container>
       </Section>
     </>

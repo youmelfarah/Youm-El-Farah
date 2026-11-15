@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { MagnifyingGlass, FadersHorizontal, X, ArrowsDownUp } from "@phosphor-icons/react";
-import { DISTRICT_OPTIONS, type DistrictKey } from "@/lib/districts";
+import { MagnifyingGlass, FadersHorizontal, ArrowsDownUp } from "@phosphor-icons/react";
+import { DISTRICT_OPTIONS } from "@/lib/districts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ export interface MarketplaceFiltersProps {
   initialParams: ValidatedListingParams;
   totalCount: number;
   cookieDate?: string | null;
+  children?: React.ReactNode;
 }
 
 const SORT_OPTIONS = [
@@ -42,6 +43,7 @@ export function MarketplaceFilters({
   initialParams,
   totalCount,
   cookieDate,
+  children,
 }: MarketplaceFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -261,81 +263,10 @@ export function MarketplaceFilters({
   );
 
   return (
-    <>
-      {/* Sticky Bar above Results: Count, Sort Dropdown, and Mobile Sheet trigger */}
-      <div className="sticky top-16 z-30 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface/95 py-3 backdrop-blur-xs">
-        {/* Count */}
-        <div className="flex items-center gap-2">
-          <span className="font-display font-semibold text-base text-text">
-            {totalCount}{" "}
-            <span className="text-xs font-normal text-text-muted font-body">
-              {totalCount === 1 ? "مقدم خدمة" : totalCount === 2 ? "مقدما خدمة" : "مقدمي خدمات"}
-            </span>
-          </span>
-        </div>
-
-        {/* Sort & Mobile Filter Button */}
-        <div className="flex items-center gap-2">
-          {/* Mobile Filters Sheet Trigger */}
-          <div className="lg:hidden">
-            <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="min-h-[44px] gap-2 text-xs"
-                >
-                  <FadersHorizontal className="h-4 w-4" weight="light" />
-                  <span>تصفية</span>
-                  {activeCount > 0 && (
-                    <Badge variant="accent" size="sm" className="px-1.5 py-0 h-4 min-w-[16px]">
-                      {activeCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-[12px] p-5 max-h-[90vh] overflow-y-auto">
-                <SheetHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
-                  <SheetTitle className="text-base font-bold font-display text-text">
-                    تصفية النتائج
-                  </SheetTitle>
-                  {activeCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleReset}
-                      className="text-xs text-danger hover:underline"
-                    >
-                      مسح الكل
-                    </button>
-                  )}
-                </SheetHeader>
-                <div className="py-4">{filterFormContent}</div>
-              </SheetContent>
-            </Sheet>
-          </div>
-
-          {/* Sort Select */}
-          <div className="flex items-center gap-1.5">
-            <ArrowsDownUp className="h-4 w-4 text-text-muted hidden sm:inline" />
-            <Select value={sort} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-[170px] sm:w-[190px] h-10 text-xs">
-                <SelectValue placeholder="الترتيب" />
-              </SelectTrigger>
-              <SelectContent align="end">
-                {SORT_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop Filters Sidebar (hidden on mobile < lg) */}
+    <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
+      {/* Desktop Filters Sidebar (starts at the exact same top line as results) */}
       <aside className="hidden lg:block w-72 shrink-0">
-        <div className="sticky top-36 rounded-[4px] border border-border bg-surface-raised p-5 shadow-xs">
+        <div className="sticky top-20 rounded-[4px] border border-border bg-surface-raised p-5 shadow-xs">
           <div className="flex items-center justify-between pb-3 mb-4 border-b border-border">
             <div className="flex items-center gap-2">
               <FadersHorizontal className="h-4 w-4 text-accent-text" weight="bold" />
@@ -356,6 +287,83 @@ export function MarketplaceFilters({
           {filterFormContent}
         </div>
       </aside>
-    </>
+
+      {/* Main Results Column (uses available width) */}
+      <div className="flex-1 w-full min-w-0">
+        {/* Sticky Bar above Results: Count, Sort Dropdown, and Mobile Sheet trigger */}
+        <div className="sticky top-16 z-30 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface/95 py-3 backdrop-blur-xs">
+          {/* Count */}
+          <div className="flex items-center gap-2">
+            <span className="font-display font-semibold text-base text-text">
+              {totalCount}{" "}
+              <span className="text-xs font-normal text-text-muted font-body">
+                {totalCount === 1 ? "مقدم خدمة" : totalCount === 2 ? "مقدما خدمة" : "مقدمي خدمات"}
+              </span>
+            </span>
+          </div>
+
+          {/* Sort & Mobile Filter Button */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Filters Sheet Trigger */}
+            <div className="lg:hidden">
+              <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[44px] gap-2 text-xs"
+                  >
+                    <FadersHorizontal className="h-4 w-4" weight="light" />
+                    <span>تصفية</span>
+                    {activeCount > 0 && (
+                      <Badge variant="accent" size="sm" className="px-1.5 py-0 h-4 min-w-[16px]">
+                        {activeCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="rounded-t-[12px] p-5 max-h-[90vh] overflow-y-auto">
+                  <SheetHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
+                    <SheetTitle className="text-base font-bold font-display text-text">
+                      تصفية النتائج
+                    </SheetTitle>
+                    {activeCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        className="text-xs text-danger hover:underline"
+                      >
+                        مسح الكل
+                      </button>
+                    )}
+                  </SheetHeader>
+                  <div className="py-4">{filterFormContent}</div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            {/* Sort Select */}
+            <div className="flex items-center gap-1.5">
+              <ArrowsDownUp className="h-4 w-4 text-text-muted hidden sm:inline" />
+              <Select value={sort} onValueChange={handleSortChange}>
+                <SelectTrigger className="w-[170px] sm:w-[190px] h-10 text-xs">
+                  <SelectValue placeholder="الترتيب" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {SORT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Content / Grid / Empty State */}
+        {children}
+      </div>
+    </div>
   );
 }

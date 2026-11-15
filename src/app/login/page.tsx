@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Logo } from "@/components/brand/Logo";
@@ -43,8 +44,17 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="border-t border-border pt-4 text-[11px] text-text-muted">
-            جميع الحقوق محفوظة © 2026 {brand.name.ar}
+          <div className="border-t border-border pt-4 text-[11px] text-text-muted flex items-center justify-between">
+            <span>جميع الحقوق محفوظة © 2026 {brand.name.ar}</span>
+            <div className="flex items-center gap-3">
+              <Link href="/privacy" className="hover:text-text transition-colors">
+                الخصوصية
+              </Link>
+              <span>•</span>
+              <Link href="/terms" className="hover:text-text transition-colors">
+                الشروط
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -73,6 +83,16 @@ export default function LoginPage() {
             <Divider label="أو عن طريق البريد الإلكتروني" />
 
             <ProviderSignIn />
+
+            <div className="pt-4 text-center text-xs text-text-muted border-t border-border/60 flex items-center justify-center gap-4">
+              <Link href="/privacy" className="hover:text-text transition-colors py-1">
+                سياسة الخصوصية
+              </Link>
+              <span className="text-border-strong">•</span>
+              <Link href="/terms" className="hover:text-text transition-colors py-1">
+                شروط الاستخدام
+              </Link>
+            </div>
           </div>
         </div>
       </div>

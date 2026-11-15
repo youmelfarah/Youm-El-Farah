@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { El_Messiri, IBM_Plex_Sans_Arabic, Cormorant_Garamond } from "next/font/google";
-import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/toast";
+import { getBaseAppUrl } from "@/lib/seo";
 import "./globals.css";
 
 const elMessiri = El_Messiri({
@@ -41,6 +41,15 @@ export const metadata: Metadata = {
   },
   description:
     "يوم الفرح هو دليلك الشامل لخدمات الأفراح في بني سويف. تصفحي، قارني، واختاري أفضل مقدمي خدمات الزفاف.",
+  metadataBase: new URL(getBaseAppUrl()),
+  openGraph: {
+    title: "يوم الفرح - دليل خدمات الأفراح في بني سويف",
+    description: "قاعات وتصوير وميك أب وتجهيزات، كلها من بني سويف.",
+    url: getBaseAppUrl(),
+    siteName: "يوم الفرح",
+    locale: "ar_EG",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -53,7 +62,6 @@ export default function RootLayout({
       <body
         className={`${elMessiri.variable} ${ibmPlexArabic.variable} ${cormorant.variable} min-h-screen bg-surface font-body text-text antialiased`}
       >
-        <SiteHeader />
         {children}
         <Toaster />
       </body>
