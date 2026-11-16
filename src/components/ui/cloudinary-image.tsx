@@ -27,7 +27,7 @@ const aspectRatioClasses: Record<ImageAspectRatio, string> = {
   "4:5": "aspect-[4/5]",
   "3:2": "aspect-[3/2]",
   "16:9": "aspect-video",
-  auto: "",
+  auto: "h-full w-full",
 };
 
 export function CloudinaryImage({
@@ -84,6 +84,7 @@ export function CloudinaryImage({
           className
         )}
         onLoad={() => setIsLoading(false)}
+        onError={() => setIsLoading(false)}
       />
     </div>
   );

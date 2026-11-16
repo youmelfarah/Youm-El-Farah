@@ -141,7 +141,7 @@ export function ProviderGallery({ media, providerName }: ProviderGalleryProps) {
                 type="button"
                 onClick={() => handleOpenLightbox(idx)}
                 className={cn(
-                  "group relative overflow-hidden rounded-[2px] bg-surface-muted text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
+                  "group relative block w-full overflow-hidden rounded-[2px] bg-surface-muted text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                   isFeatured
                     ? "col-span-2 row-span-2 aspect-square"
                     : "aspect-[4/5]"
@@ -153,6 +153,7 @@ export function ProviderGallery({ media, providerName }: ProviderGalleryProps) {
                   src={item.url}
                   alt={item.caption || `${providerName} - صورة ${idx + 1}`}
                   aspectRatio="auto"
+                  containerClassName="absolute inset-0 h-full w-full"
                   sizes={
                     isFeatured
                       ? "(max-width: 768px) 100vw, 50vw"
