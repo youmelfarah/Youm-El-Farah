@@ -17,10 +17,9 @@ import { Reveal } from "@/components/ui/reveal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CloudinaryImage } from "@/components/ui/cloudinary-image";
 import { Placeholder } from "@/components/ui/placeholder";
-import { PublicHeader } from "@/components/layout/PublicHeader";
-import { HomeSearchCard } from "@/components/marketplace/home-search-card";
 import { ProviderCard } from "@/components/marketplace/provider-card";
 import { BrandConfigHint } from "@/components/brand/brand-config-hint";
+import { HomeHero } from "@/components/home/HomeHero";
 import { JourneySection } from "@/components/home/JourneySection";
 
 export const revalidate = 300;
@@ -189,6 +188,10 @@ export default async function HomePage(props: HomePageProps = {}) {
 
   const hasHeroImage = isBrandConfigured(brand.heroImagePublicId);
 
+  const providerCountsBySlug = Object.fromEntries(
+    categoriesWithProviders.map((c) => [c.slug, c._count.providers])
+  );
+
   return (
     <>
       <script
@@ -196,15 +199,10 @@ export default async function HomePage(props: HomePageProps = {}) {
         dangerouslySetInnerHTML={{ __html: safeJsonLdString(jsonLd) }}
       />
 
-      {/* 1. HERO (Dark Theme, Full-bleed) */}
-      <section
-        data-theme="dark"
-        style={{ backgroundColor: "var(--surface)", color: "var(--text)" }}
-        className="relative w-full overflow-hidden bg-surface text-text"
-      >
-        {/* Background Layer with Lightened Scrim for Rich Image Visibility */}
-        <div className="absolute inset-0 z-0">
-          {hasHeroImage ? (
+      {/* 1. HERO (Dark Theme, Split Layout with Interactive 6-Category Wheel) */}
+      <HomeHero
+        backgroundLayer={
+          hasHeroImage ? (
             <CloudinaryImage
               publicId={brand.heroImagePublicId!}
               alt={brand.name.ar}
@@ -221,54 +219,23 @@ export default async function HomePage(props: HomePageProps = {}) {
               label="YOUM EL-FARAH"
               className="h-full w-full rounded-none border-none opacity-20"
             />
-          )}
-          {/* Subtle Dark Scrim to enhance contrast while keeping the venue image clear */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-[#17120F]" />
-        </div>
-
-        {/* Development configuration note if hero image missing */}
-        {!hasHeroImage && (
-          <div className="absolute top-20 start-6 z-30 pointer-events-auto">
-            <BrandConfigHint field="heroImagePublicId" />
-          </div>
-        )}
-
-        {/* Transparent Header */}
-        <div className="relative z-20">
-          <PublicHeader variant="transparent" initialWeddingDate={weddingDate} />
-        </div>
-
-        {/* Hero Content */}
-        <div className="relative z-10 py-16 sm:py-24 lg:py-32">
-          <Container>
-            <div className="mx-auto max-w-3xl text-center">
-              <div>
-                <span className="font-latin text-xs font-semibold tracking-[0.18em] text-accent-text uppercase drop-shadow-xs">
-                  {homeContent.hero.eyebrow}
-                </span>
-                <h1 className="mt-4 font-display text-3xl sm:text-5xl lg:text-6xl font-bold text-text leading-[1.25] drop-shadow-sm">
-                  {homeContent.hero.title}
-                </h1>
-                <p className="mt-6 text-sm sm:text-base text-text-muted leading-[1.85] max-w-2xl mx-auto drop-shadow-xs">
-                  {homeContent.hero.paragraph}
-                </p>
-              </div>
-
-              {/* Compact Search Card */}
-              <div className="mt-10 sm:mt-12 text-start">
-                <HomeSearchCard
-                  categories={categoriesWithProviders.map((c) => ({
-                    id: c.id,
-                    slug: c.slug,
-                    nameAr: c.nameAr,
-                  }))}
-                  initialWeddingDate={weddingDate}
-                />
-              </div>
+          )
+        }
+        configHint={
+          !hasHeroImage ? (
+            <div className="absolute top-20 start-6 z-30 pointer-events-auto">
+              <BrandConfigHint field="heroImagePublicId" />
             </div>
-          </Container>
-        </div>
-      </section>
+          ) : undefined
+        }
+        categories={categoriesWithProviders.map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          nameAr: c.nameAr,
+        }))}
+        providerCounts={providerCountsBySlug}
+        weddingDate={weddingDate}
+      />
 
       {/* 2. BRIDE'S JOURNEY */}
       <JourneySection weddingDate={weddingDate} />

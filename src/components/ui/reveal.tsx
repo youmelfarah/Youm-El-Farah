@@ -25,6 +25,13 @@ export function Reveal({
   ...props
 }: RevealProps) {
   const shouldReduceMotion = useReducedMotion();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const prefersReduced = mounted && Boolean(shouldReduceMotion);
 
   // Motion expects delay in seconds. If a number >= 5 was passed, it was intended as milliseconds (e.g. 50, 150).
   // Automatically normalize and clamp to a maximum of 0.25s so content never gets stuck invisible.
@@ -42,7 +49,7 @@ export function Reveal({
     <motion.div
       initial={{
         opacity: 0,
-        y: shouldReduceMotion ? 0 : yOffset,
+        y: prefersReduced ? 0 : yOffset,
       }}
       whileInView={{
         opacity: 1,
@@ -50,8 +57,8 @@ export function Reveal({
       }}
       viewport={{ once: true, margin: "0px", amount: 0.02 }}
       transition={{
-        duration: shouldReduceMotion ? 0.15 : safeDuration,
-        delay: shouldReduceMotion ? 0 : safeDelay,
+        duration: prefersReduced ? 0.15 : safeDuration,
+        delay: prefersReduced ? 0 : safeDelay,
         ease: easeCurve,
       }}
       className={cn(className)}
@@ -74,6 +81,13 @@ export function RevealGroup({
   ...props
 }: RevealGroupProps) {
   const shouldReduceMotion = useReducedMotion();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const prefersReduced = mounted && Boolean(shouldReduceMotion);
 
   const normalizedStagger = stagger >= 5 ? stagger / 1000 : stagger;
   const safeStagger = Math.min(Math.max(normalizedStagger, 0), 0.1);
@@ -83,7 +97,7 @@ export function RevealGroup({
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: shouldReduceMotion ? 0 : safeStagger,
+        staggerChildren: prefersReduced ? 0 : safeStagger,
       },
     },
   };
@@ -91,13 +105,13 @@ export function RevealGroup({
   const itemVariants = {
     hidden: {
       opacity: 0,
-      y: shouldReduceMotion ? 0 : 14,
+      y: prefersReduced ? 0 : 14,
     },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: shouldReduceMotion ? 0.15 : 0.35,
+        duration: prefersReduced ? 0.15 : 0.35,
         ease: easeCurve,
       },
     },
