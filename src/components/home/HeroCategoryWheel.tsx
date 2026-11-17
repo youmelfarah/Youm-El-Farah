@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Pause, Play } from "@phosphor-icons/react";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
 
 export interface HeroWheelCategory {
@@ -194,12 +194,6 @@ export function HeroCategoryWheel({
     setRotationDeg((prev) => prev - SLICE_ANGLE);
   }, []);
 
-  // Rotate to previous item
-  const goPrev = React.useCallback(() => {
-    setActiveIndex((prev) => (prev - 1 + SLICE_COUNT) % SLICE_COUNT);
-    setRotationDeg((prev) => prev + SLICE_ANGLE);
-  }, []);
-
   // Rotate directly via shortest angular path to target slice index
   const selectSlice = React.useCallback(
     (targetIdx: number) => {
@@ -218,17 +212,16 @@ export function HeroCategoryWheel({
     [activeIndex, buildCategoryHref, router]
   );
 
-  // Auto-rotate timer
+  // Auto-rotate timer (snappy interval)
   React.useEffect(() => {
     if (isPaused || isHovered) return;
     const timer = window.setInterval(() => {
       goNext();
-    }, 4200);
+    }, 2200);
     return () => window.clearInterval(timer);
   }, [isPaused, isHovered, goNext]);
 
   const activeHref = buildCategoryHref(activeCategory.slug);
-  const activeCount = providerCounts[activeCategory.slug];
 
   return (
     <div
@@ -250,7 +243,7 @@ export function HeroCategoryWheel({
           className="absolute inset-0 will-change-transform"
           style={{
             transform: `rotate(${rotationDeg}deg)`,
-            transition: "transform 750ms cubic-bezier(0.22, 1, 0.36, 1)",
+            transition: "transform 500ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
           <svg
@@ -354,7 +347,7 @@ export function HeroCategoryWheel({
                 alt={item.label}
                 loading={idx === 0 ? "eager" : "lazy"}
                 className={cn(
-                  "absolute inset-0 h-full w-full object-cover object-center transition-all duration-700 ease-out",
+                  "absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out",
                   isActive
                     ? "opacity-100 scale-100 group-hover:scale-105"
                     : "opacity-0 scale-110 pointer-events-none"
@@ -378,70 +371,8 @@ export function HeroCategoryWheel({
         </Link>
       </div>
 
-      {/* Controls & Direct Link Bar beneath the wheel (inspired by Masar Architects) */}
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
-        {/* Primary CTA Link to active category */}
-        <Link
-          href={activeHref}
-          className="group inline-flex items-center gap-2.5 h-10 px-4 sm:px-5 rounded-[4px] border border-[#FBF8F3]/35 bg-black/35 backdrop-blur-md text-xs sm:text-sm font-medium text-[#FBF8F3] transition-all duration-300 hover:border-[#FBF8F3] hover:bg-black/55"
-        >
-          <span>
-            تصفح {activeCategory.label}
-            {typeof activeCount === "number" && activeCount > 0
-              ? ` (${activeCount})`
-              : ""}
-          </span>
-          <ArrowLeft
-            className="h-3.5 w-3.5 text-accent-text transition-transform duration-200 group-hover:-translate-x-1"
-            weight="bold"
-          />
-        </Link>
-
-        {/* Prev / Next Controls */}
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={goPrev}
-            aria-label="الخدمة السابقة"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#FBF8F3]/25 bg-black/30 backdrop-blur-md text-[#FBF8F3]/85 transition-colors hover:border-[#FBF8F3]/70 hover:bg-black/50 hover:text-[#FBF8F3] cursor-pointer"
-          >
-            <ArrowRight className="h-4 w-4" weight="regular" />
-          </button>
-
-          <button
-            type="button"
-            onClick={goNext}
-            aria-label="الخدمة التالية"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#FBF8F3]/25 bg-black/30 backdrop-blur-md text-[#FBF8F3]/85 transition-colors hover:border-[#FBF8F3]/70 hover:bg-black/50 hover:text-[#FBF8F3] cursor-pointer"
-          >
-            <ArrowLeft className="h-4 w-4" weight="regular" />
-          </button>
-
-          {/* Pause / Play Auto-Rotation Button */}
-          <button
-            type="button"
-            onClick={() => setIsPaused((p) => !p)}
-            aria-label={isPaused ? "تشغيل الدوران التلقائي" : "إيقاف الدوران مؤقتاً"}
-            title={isPaused ? "تشغيل" : "إيقاف مؤقت"}
-            className="inline-flex h-10 px-3 items-center justify-center gap-1.5 rounded-[4px] border border-[#FBF8F3]/25 bg-black/30 backdrop-blur-md text-[11px] font-medium text-[#FBF8F3]/85 transition-colors hover:border-[#FBF8F3]/70 hover:bg-black/50 hover:text-[#FBF8F3] cursor-pointer"
-          >
-            {isPaused ? (
-              <>
-                <Play className="h-3.5 w-3.5" weight="fill" />
-                <span className="hidden sm:inline">تشغيل</span>
-              </>
-            ) : (
-              <>
-                <Pause className="h-3.5 w-3.5" weight="fill" />
-                <span className="hidden sm:inline">إيقاف</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
       {/* Subtle counter & active subtitle */}
-      <div className="mt-2.5 flex items-center gap-2 text-xs text-text-muted/90">
+      <div className="mt-4 flex items-center gap-2 text-xs text-text-muted/90">
         <span className="font-latin tracking-widest text-accent-text font-semibold">
           {String(activeIndex + 1).padStart(2, "0")} /{" "}
           {String(SLICE_COUNT).padStart(2, "0")}
