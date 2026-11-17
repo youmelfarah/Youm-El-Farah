@@ -71,7 +71,7 @@ export default async function AboutPage() {
         <Container size="narrow">
           <div className="flex flex-col gap-12 sm:gap-16">
             {aboutContent.sections.map((sec, idx) => (
-              <Reveal key={sec.id} delay={idx * 80}>
+              <Reveal key={sec.id} delay={idx * 0.04}>
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 items-start border-b border-border/60 pb-10 sm:pb-12 last:border-b-0">
                   <div className="md:col-span-4">
                     <h2 className="font-display text-xl sm:text-2xl font-bold text-text">
@@ -89,7 +89,7 @@ export default async function AboutPage() {
 
             {/* Optional Team Block (Rendered ONLY if brand.team has entries) */}
             {hasTeam && (
-              <Reveal delay={200}>
+              <Reveal delay={0.08}>
                 <div className="pt-8 border-t border-border">
                   <SectionHeading
                     eyebrow={aboutContent.team.eyebrow}
@@ -130,7 +130,7 @@ export default async function AboutPage() {
             )}
 
             {/* CTA Row */}
-            <Reveal delay={250}>
+            <Reveal delay={0.1}>
               <div className="flex flex-col sm:flex-row items-center justify-between gap-6 rounded-[4px] border border-border bg-surface-raised p-6 sm:p-8 mt-4">
                 <div className="text-center sm:text-start">
                   <h3 className="font-display text-lg font-bold text-text">

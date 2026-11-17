@@ -208,6 +208,120 @@ h6 {
   --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ─── Bride's Journey Section Tone Palette & Tokens ───────────────────────── */
+.journey-tone-0 {
+  --journey-bg: #F3CDBB;
+  --journey-text: #17120F;
+  --journey-line: #7A3F2E;
+  --journey-muted: #5A3F36;
+  --journey-orb: #F0A35E;
+}
+
+.journey-tone-1 {
+  --journey-bg: #F8E9D6;
+  --journey-text: #17120F;
+  --journey-line: #7A5F34;
+  --journey-muted: #5D5148;
+  --journey-orb: #F2B44A;
+}
+
+.journey-tone-2 {
+  --journey-bg: #FBF6EE;
+  --journey-text: #17120F;
+  --journey-line: #7A5F34;
+  --journey-muted: #5D5148;
+  --journey-orb: #F7C94B;
+}
+
+.journey-tone-3 {
+  --journey-bg: #E9B47F;
+  --journey-text: #17120F;
+  --journey-line: #5A3A14;
+  --journey-muted: #4A3520;
+  --journey-orb: #F08A3C;
+}
+
+.journey-tone-4 {
+  --journey-bg: #4A2233;
+  --journey-text: #F5EFE6;
+  --journey-line: #E3C79A;
+  --journey-muted: #E6D6C8;
+  --journey-orb: #E3C79A;
+}
+
+.journey-tone-5 {
+  --journey-bg: #0E0B13;
+  --journey-text: #F5EFE6;
+  --journey-line: #D4BC92;
+  --journey-muted: #CFC3B6;
+  --journey-orb: #F5EFE6;
+}
+
+.journey-section {
+  background-color: var(--journey-bg);
+  color: var(--journey-text);
+  transition: background-color 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+              color 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.journey-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 1.125rem;
+  border-radius: 4px;
+  border: 1px solid var(--journey-line);
+  color: var(--journey-text);
+  background-color: rgba(255, 255, 255, 0.08);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.journey-chip:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+.journey-chip:focus-visible {
+  outline: 2px solid var(--journey-line);
+  outline-offset: 2px;
+}
+
+.journey-chip-muted {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 1.125rem;
+  border-radius: 4px;
+  border: 1px dashed var(--journey-line);
+  color: var(--journey-muted);
+  background-color: transparent;
+  opacity: 0.68;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  cursor: default;
+}
+
+.journey-photo-grade img {
+  filter: saturate(0.92) contrast(1.03) sepia(0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-section,
+  .journey-chip,
+  .journey-circle-box {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   *,

@@ -75,7 +75,7 @@ export default async function ContactPage() {
               <div className="border-b border-border">
                 {/* 1. WhatsApp (Primary channel) */}
                 {whatsappUrl && (
-                  <Reveal delay={50}>
+                  <Reveal delay={0.02}>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border py-8">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export default async function ContactPage() {
 
                 {/* 2. Instagram */}
                 {hasInstagram && (
-                  <Reveal delay={100}>
+                  <Reveal delay={0.05}>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border py-8">
                       <div className="flex flex-col gap-1">
                         <h2 className="font-display text-xl font-bold text-text">
@@ -134,7 +134,7 @@ export default async function ContactPage() {
 
                 {/* 3. Facebook */}
                 {hasFacebook && (
-                  <Reveal delay={150}>
+                  <Reveal delay={0.08}>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border py-8">
                       <div className="flex flex-col gap-1">
                         <h2 className="font-display text-xl font-bold text-text">
@@ -161,7 +161,7 @@ export default async function ContactPage() {
 
                 {/* 4. Email */}
                 {hasEmail && (
-                  <Reveal delay={200}>
+                  <Reveal delay={0.1}>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border py-8 last:border-b-0">
                       <div className="flex flex-col gap-1">
                         <h2 className="font-display text-xl font-bold text-text">

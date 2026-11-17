@@ -1,4 +1,4 @@
-export type CloudinaryImagePreset = "thumb" | "card" | "gallery" | "cover" | "og";
+export type CloudinaryImagePreset = "thumb" | "card" | "gallery" | "cover" | "og" | "hero";
 
 const PRESET_TRANSFORMATIONS: Record<CloudinaryImagePreset, string> = {
   thumb: "c_fill,g_auto,w_200,h_200,f_auto,q_auto",
@@ -6,6 +6,7 @@ const PRESET_TRANSFORMATIONS: Record<CloudinaryImagePreset, string> = {
   gallery: "c_limit,w_1280,h_1280,f_auto,q_auto",
   cover: "c_fill,g_auto,w_1200,h_480,f_auto,q_auto",
   og: "c_fill,g_auto,w_1200,h_630,f_auto,q_auto",
+  hero: "c_limit,w_1920,h_1200,f_auto,q_auto",
 };
 
 function extractCloudNameFromCloudinaryUrl(url?: string | null): string | null {

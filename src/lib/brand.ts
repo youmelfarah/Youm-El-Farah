@@ -53,7 +53,7 @@ export const brand: BrandConfig = {
 
   // Cloudinary public id for home hero image (e.g. "youm-el-farah/home/hero-main")
   // When empty or placeholder, falls back to the design-system Placeholder
-  heroImagePublicId: "",
+  heroImagePublicId: "hero2",
 
   // WhatsApp international digits (e.g. "201275729927")
   whatsapp: "201275729927",

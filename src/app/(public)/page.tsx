@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { prisma } from "@/lib/prisma";
 import { visibleProviderWhere } from "@/lib/provider-visibility";
-import { getWeddingDateFromCookie } from "@/lib/wedding-date";
+import { getWeddingDateFromCookie, validateWeddingDate } from "@/lib/wedding-date";
 import { brand, isBrandConfigured } from "@/lib/brand";
 import { getBaseAppUrl, safeJsonLdString } from "@/lib/seo";
 import { homeContent } from "@/content/home";
@@ -21,6 +21,7 @@ import { PublicHeader } from "@/components/layout/PublicHeader";
 import { HomeSearchCard } from "@/components/marketplace/home-search-card";
 import { ProviderCard } from "@/components/marketplace/provider-card";
 import { BrandConfigHint } from "@/components/brand/brand-config-hint";
+import { JourneySection } from "@/components/home/JourneySection";
 
 export const revalidate = 300;
 
@@ -43,8 +44,27 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function HomePage() {
-  const weddingDate = await getWeddingDateFromCookie();
+interface HomePageProps {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function HomePage(props: HomePageProps = {}) {
+  const resolvedSearchParams = props.searchParams ? await props.searchParams : undefined;
+  const rawDateParam =
+    typeof resolvedSearchParams?.date === "string" ? resolvedSearchParams.date : undefined;
+
+  let weddingDate: string | null = null;
+  if (rawDateParam) {
+    const val = await validateWeddingDate(rawDateParam);
+    if (val.valid && val.normalized) {
+      weddingDate = val.normalized;
+    }
+  }
+
+  if (!weddingDate) {
+    weddingDate = await getWeddingDateFromCookie();
+  }
+
   const baseUrl = getBaseAppUrl();
 
   // 1. Fetch active categories with at least one visible provider
@@ -182,15 +202,18 @@ export default async function HomePage() {
         style={{ backgroundColor: "var(--surface)", color: "var(--text)" }}
         className="relative w-full overflow-hidden bg-surface text-text"
       >
-        {/* Background Layer with Dark Scrim */}
+        {/* Background Layer with Lightened Scrim for Rich Image Visibility */}
         <div className="absolute inset-0 z-0">
           {hasHeroImage ? (
             <CloudinaryImage
               publicId={brand.heroImagePublicId!}
               alt={brand.name.ar}
               aspectRatio="auto"
+              containerClassName="absolute inset-0 h-full w-full"
+              preset="hero"
+              sizes="100vw"
               priority
-              className="h-full w-full object-cover opacity-35"
+              className="h-full w-full object-cover object-center opacity-85"
             />
           ) : (
             <Placeholder
@@ -199,8 +222,8 @@ export default async function HomePage() {
               className="h-full w-full rounded-none border-none opacity-20"
             />
           )}
-          {/* Dark Scrim */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-[#17120F]/90 to-[#17120F]" />
+          {/* Subtle Dark Scrim to enhance contrast while keeping the venue image clear */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-[#17120F]" />
         </div>
 
         {/* Development configuration note if hero image missing */}
@@ -219,37 +242,38 @@ export default async function HomePage() {
         <div className="relative z-10 py-16 sm:py-24 lg:py-32">
           <Container>
             <div className="mx-auto max-w-3xl text-center">
-              <Reveal>
-                <span className="font-latin text-xs font-semibold tracking-[0.18em] text-accent-text uppercase">
+              <div>
+                <span className="font-latin text-xs font-semibold tracking-[0.18em] text-accent-text uppercase drop-shadow-xs">
                   {homeContent.hero.eyebrow}
                 </span>
-                <h1 className="mt-4 font-display text-3xl sm:text-5xl lg:text-6xl font-bold text-text leading-[1.25]">
+                <h1 className="mt-4 font-display text-3xl sm:text-5xl lg:text-6xl font-bold text-text leading-[1.25] drop-shadow-sm">
                   {homeContent.hero.title}
                 </h1>
-                <p className="mt-6 text-sm sm:text-base text-text-muted leading-[1.85] max-w-2xl mx-auto">
+                <p className="mt-6 text-sm sm:text-base text-text-muted leading-[1.85] max-w-2xl mx-auto drop-shadow-xs">
                   {homeContent.hero.paragraph}
                 </p>
-              </Reveal>
+              </div>
 
               {/* Compact Search Card */}
               <div className="mt-10 sm:mt-12 text-start">
-                <Reveal delay={150}>
-                  <HomeSearchCard
-                    categories={categoriesWithProviders.map((c) => ({
-                      id: c.id,
-                      slug: c.slug,
-                      nameAr: c.nameAr,
-                    }))}
-                    initialWeddingDate={weddingDate}
-                  />
-                </Reveal>
+                <HomeSearchCard
+                  categories={categoriesWithProviders.map((c) => ({
+                    id: c.id,
+                    slug: c.slug,
+                    nameAr: c.nameAr,
+                  }))}
+                  initialWeddingDate={weddingDate}
+                />
               </div>
             </div>
           </Container>
         </div>
       </section>
 
-      {/* 2. SERVICES INDEX (Light Theme, Typographic List) */}
+      {/* 2. BRIDE'S JOURNEY */}
+      <JourneySection weddingDate={weddingDate} />
+
+      {/* 3. SERVICES INDEX (Light Theme, Typographic List) */}
       <Section spacing="default" className="border-b border-border bg-surface">
         <Container>
           <Reveal>
@@ -320,7 +344,7 @@ export default async function HomePage() {
 
           <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 sm:gap-10">
             {homeContent.howItWorks.steps.map((step, idx) => (
-              <Reveal key={step.number} delay={idx * 100}>
+              <Reveal key={step.number} delay={idx * 0.04}>
                 <div className="flex flex-col gap-3 p-6 rounded-[4px] border border-border bg-surface transition-colors">
                   <span className="font-latin text-3xl sm:text-4xl font-medium text-accent-text">
                     {step.number}
@@ -364,7 +388,7 @@ export default async function HomePage() {
 
             <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {providers.map((p, idx) => (
-                <Reveal key={p.id} delay={idx * 80}>
+                <Reveal key={p.id} delay={idx * 0.04}>
                   <ProviderCard provider={p} priority={idx < 3} />
                 </Reveal>
               ))}

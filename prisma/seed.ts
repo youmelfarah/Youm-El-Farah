@@ -8,16 +8,15 @@ const CATEGORIES = [
   { slug: "videographer", nameAr: "مصور فيديو" },
   { slug: "media-coverage", nameAr: "ميديا كفريج" },
   { slug: "makeup-artist", nameAr: "ميك اب ارتيست" },
-  { slug: "skin-care", nameAr: "سكين كير" },
-  { slug: "body-care", nameAr: "بودي كير" },
   { slug: "hair-artist", nameAr: "هير ارتيست" },
-  { slug: "lashes-brows", nameAr: "رموش وحواجب" },
+  { slug: "mazoon", nameAr: "المأذون" },
   { slug: "hotels", nameAr: "الفنادق" },
   { slug: "photo-session-locations", nameAr: "أماكن السيشنز" },
   { slug: "atelier", nameAr: "الأتيليه" },
   { slug: "decorations", nameAr: "الديكورات" },
   { slug: "dress-accessories", nameAr: "اكسسوارات الفستان" },
   { slug: "flowers", nameAr: "بيكيهات" },
+  { slug: "wedding-car", nameAr: "عربية العرس" },
 ];
 
 async function main() {
@@ -68,13 +67,34 @@ async function main() {
       update: {
         nameAr: cat.nameAr,
         sortOrder: i,
+        isActive: true,
       },
       create: {
         slug: cat.slug,
         nameAr: cat.nameAr,
         sortOrder: i,
+        isActive: true,
       },
     });
+  }
+
+  // Remove deprecated categories if they have no providers
+  const activeSlugs = CATEGORIES.map((c) => c.slug);
+  const toDelete = await prisma.category.findMany({
+    where: {
+      slug: { notIn: activeSlugs },
+      providers: { none: {} },
+    },
+  });
+  if (toDelete.length > 0) {
+    await prisma.category.deleteMany({
+      where: { id: { in: toDelete.map((c) => c.id) } },
+    });
+    console.log(
+      `🗑️ Removed ${toDelete.length} deprecated categories: ${toDelete
+        .map((c) => c.slug)
+        .join(", ")}`
+    );
   }
 
   console.log(`✅ ${CATEGORIES.length} categories upserted`);

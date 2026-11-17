@@ -82,7 +82,7 @@ export default async function JoinPage() {
 
           <div className="mt-10 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6">
             {joinContent.benefits.items.map((item, idx) => (
-              <Reveal key={idx} delay={idx * 80}>
+              <Reveal key={idx} delay={idx * 0.04}>
                 <div className="flex items-start gap-4 p-6 rounded-[4px] border border-border bg-surface-raised">
                   <CheckCircle className="h-5 w-5 text-accent-text shrink-0 mt-0.5" weight="fill" />
                   <p className="font-display font-medium text-base text-text leading-snug">
@@ -107,7 +107,7 @@ export default async function JoinPage() {
 
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8">
             {joinContent.steps.list.map((step, idx) => (
-              <Reveal key={step.number} delay={idx * 100}>
+              <Reveal key={step.number} delay={idx * 0.04}>
                 <div className="flex flex-col gap-3 p-6 rounded-[4px] border border-border bg-surface">
                   <span className="font-latin text-3xl sm:text-4xl font-medium text-accent-text">
                     {step.number}

@@ -60,7 +60,7 @@ export default async function TermsPage() {
 
           <div className="flex flex-col gap-10">
             {termsContent.sections.map((sec, idx) => (
-              <Reveal key={idx} delay={idx * 60}>
+              <Reveal key={idx} delay={idx * 0.03}>
                 <article className="border-b border-border/50 pb-8 last:border-b-0">
                   <h2 className="font-display text-lg sm:text-xl font-bold text-text mb-3">
                     {sec.title}
