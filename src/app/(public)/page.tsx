@@ -3,10 +3,12 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CalendarCheck,
-  Sparkle,
-  ChatCircle,
-  Check,
-} from "@phosphor-icons/react/dist/ssr";
+  Sparkles,
+  MessageCircle,
+  CheckCircle2,
+  ShieldCheck,
+  Star,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { visibleProviderWhere } from "@/lib/provider-visibility";
 import { getWeddingDateFromCookie, validateWeddingDate } from "@/lib/wedding-date";
@@ -18,7 +20,6 @@ import type { PublicProviderCardData } from "@/lib/marketplace-query";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CloudinaryImage } from "@/components/ui/cloudinary-image";
@@ -289,7 +290,6 @@ export default async function HomePage(props: HomePageProps = {}) {
                       {/* Arrow Left (RTL forward direction) */}
                       <ArrowLeft
                         className="h-5 w-5 text-text-muted transition-all duration-200 group-hover:text-accent-text group-hover:-translate-x-1"
-                        weight="light"
                       />
                     </div>
                   </Link>
@@ -305,108 +305,241 @@ export default async function HomePage(props: HomePageProps = {}) {
         </Container>
       </Section>
 
-      {/* 3. HOW IT WORKS (Refined Bridal 3-Step Experience) */}
-      <Section spacing="default" className="border-b border-border bg-surface-raised/60 py-16 sm:py-20">
+      {/* 4. HOW IT WORKS (Visual Mini-UI Cards Showcase) */}
+      <Section spacing="default" className="border-b border-[#EFE5DA] bg-[#FAF6F0] py-16 sm:py-24">
         <Container>
+          {/* Section Header */}
           <Reveal>
-            <SectionHeading
-              eyebrow={homeContent.howItWorks.eyebrow}
-              title={homeContent.howItWorks.title}
-              align="center"
-              className="mb-12 sm:mb-16"
-            />
+            <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FCECEF] border border-rose-200/80 px-4 py-1 text-xs font-semibold text-[#9E3B52] shadow-2xs mb-3.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#B84A62]" />
+                <span>رحلتك في 3 خطوات بسيطة</span>
+              </span>
+              <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#2A1E1B]">
+                إزاي بتجهزي معانا
+              </h2>
+              <p className="mt-3.5 text-sm sm:text-base text-[#6B625A] leading-relaxed">
+                كل خطوة محسوبة لتوفير وقتك وفلوسك، وتوصيلك بأفضل خدمات بني سويف بكل راحة وثقة وبدون وسيط.
+              </p>
+            </div>
           </Reveal>
 
-          {/* Steps Grid with Desktop Connector Line */}
-          <div className="relative">
-            {/* Desktop horizontal decorative dashed connector line */}
-            <div
-              aria-hidden="true"
-              className="hidden md:block absolute top-[52px] start-[16%] end-[16%] border-t-2 border-dashed border-[#EAE0D5] -z-0 pointer-events-none"
-            />
+          {/* Three Elevated Visual Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-7">
+            {/* Card 01 — اختاري يوم فرحك */}
+            <Reveal delay={0.05}>
+              <div className="group bg-white rounded-3xl border border-[#EFE4D8] overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full">
+                {/* Top Visual Stage */}
+                <div className="h-44 bg-gradient-to-br from-[#FCECEF] via-[#FFF4EE] to-[#FDF8F2] p-5 flex items-center justify-center relative overflow-hidden select-none">
+                  {/* Subtle decorative background circles */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute -top-6 -end-6 w-24 h-24 rounded-full bg-rose-200/30 blur-xl pointer-events-none"
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="absolute -bottom-6 -start-6 w-24 h-24 rounded-full bg-peach-200/30 blur-xl pointer-events-none"
+                  />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative z-10">
-              {homeContent.howItWorks.steps.map((step, idx) => {
-                const StepIcon =
-                  idx === 0
-                    ? CalendarCheck
-                    : idx === 1
-                    ? Sparkle
-                    : ChatCircle;
+                  {/* Floating Mini Calendar Widget */}
+                  <div className="bg-white rounded-2xl shadow-md border border-rose-100 p-3.5 w-full max-w-[220px] relative z-10 transition-transform duration-300 group-hover:scale-105">
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-rose-50 text-xs">
+                      <span className="font-semibold text-[#2A1E1B]">أغسطس 2026</span>
+                      <CalendarCheck className="w-4 h-4 text-[#B84A62]" />
+                    </div>
 
-                return (
-                  <Reveal key={step.number} delay={idx * 0.08}>
-                    <div className="group relative flex flex-col h-full bg-white rounded-2xl border border-[#EAE0D5] p-6 sm:p-7 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-                      {/* Step Number Watermark (Top-Left in RTL) */}
-                      <span
-                        aria-hidden="true"
-                        className="absolute top-4 end-5 font-latin text-5xl sm:text-6xl font-bold text-[#EAE0D5]/50 group-hover:text-[#D8C7B5]/60 transition-colors select-none pointer-events-none leading-none"
-                      >
-                        {step.number}
-                      </span>
+                    {/* Compact 7-column mini date grid */}
+                    <div className="grid grid-cols-7 gap-1 text-[10px] text-[#8C7A75] text-center mb-1 font-medium">
+                      <span>س</span>
+                      <span>ح</span>
+                      <span>ن</span>
+                      <span>ث</span>
+                      <span>ر</span>
+                      <span>خ</span>
+                      <span>ج</span>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 text-[11px] text-center font-latin font-medium text-[#2A1E1B] items-center">
+                      <span className="text-stone-400">11</span>
+                      <span className="text-stone-400">12</span>
+                      <span className="text-stone-400">13</span>
+                      <span className="text-stone-400">14</span>
+                      <div className="w-5 h-5 rounded-full bg-[#B84A62] text-white flex items-center justify-center font-bold text-[10px] mx-auto shadow-xs">
+                        15
+                      </div>
+                      <span className="text-stone-400">16</span>
+                      <span className="text-stone-400">17</span>
+                    </div>
 
-                      {/* Soft Pastel / Warm-Tinted Icon Badge */}
-                      <div className="relative z-10 w-12 h-12 rounded-xl bg-[#FDF6EE] border border-[#F3E7D8] flex items-center justify-center mb-5 text-[#7A5F34] shadow-xs group-hover:scale-105 group-hover:bg-[#FBEFD9] transition-all duration-300">
-                        <StepIcon className="h-6 w-6" weight="regular" />
+                    {/* Floating status chip below */}
+                    <div className="mt-2.5 pt-2 border-t border-rose-50 flex items-center justify-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-[11px] font-semibold text-[#2A1E1B]">14 مقدم خدمة متاح</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Text Area */}
+                <div className="p-6 flex flex-col flex-1">
+                  <span className="inline-block self-start rounded-full bg-[#FCECEF] text-[#9E3B52] text-xs font-semibold px-2.5 py-0.5 mb-2.5">
+                    الخطوة 01
+                  </span>
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-[#2A1E1B] mb-2">
+                    اختاري يوم فرحك
+                  </h3>
+                  <p className="text-sm text-[#6B625A] leading-[1.85] flex-1">
+                    اعرضي المتاح بس في اليوم ده من غير ما تتصلي بعشرين حد.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Card 02 — قارني براحتك */}
+            <Reveal delay={0.12}>
+              <div className="group bg-white rounded-3xl border border-[#EFE4D8] overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full">
+                {/* Top Visual Stage */}
+                <div className="h-44 bg-gradient-to-br from-[#FBF3E4] via-[#FFF7EC] to-[#FCEEE5] p-5 flex items-center justify-center relative overflow-hidden select-none">
+                  {/* Subtle decorative background circles */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute -top-6 -end-6 w-24 h-24 rounded-full bg-amber-200/30 blur-xl pointer-events-none"
+                  />
+
+                  {/* Overlapping Mini Vendor Comparison Cards */}
+                  <div className="relative w-full max-w-[220px] flex items-center justify-center">
+                    {/* Background tilted card */}
+                    <div
+                      aria-hidden="true"
+                      className="absolute -top-2.5 start-2 end-2 bg-white/70 rounded-xl border border-amber-100/70 p-2.5 shadow-xs transform rotate-3 scale-95 pointer-events-none opacity-70"
+                    >
+                      <div className="h-2 w-16 rounded-full bg-amber-200/70 mb-1.5" />
+                      <div className="h-2 w-24 rounded-full bg-stone-200/60" />
+                    </div>
+
+                    {/* Foreground Mini Card */}
+                    <div className="relative z-10 bg-white rounded-xl shadow-md border border-amber-100/90 p-3 w-full transform -rotate-1 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="h-2.5 w-14 rounded-full bg-gradient-to-r from-[#C4935B] to-[#F3E6D3]" />
+                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full font-medium">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>موثق</span>
+                        </span>
                       </div>
 
-                      {/* Step Title */}
-                      <h3 className="relative z-10 font-display text-lg sm:text-xl font-bold text-text mb-2.5">
-                        {step.title}
-                      </h3>
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        <span className="text-xs font-bold text-[#2A1E1B] truncate">قاعة اللوتس الملكية</span>
+                        <div
+                          className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full shrink-0"
+                          dir="ltr"
+                        >
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <span>4.9</span>
+                        </div>
+                      </div>
 
-                      {/* Step Description */}
-                      <p className="relative z-10 text-sm text-text-muted leading-[1.85] flex-1">
-                        {step.description}
-                      </p>
+                      <div className="inline-block text-[11px] font-semibold text-[#7A5F34] bg-[#FBF3E4] px-2 py-0.5 rounded-md">
+                        12,000 ج.م
+                      </div>
                     </div>
-                  </Reveal>
-                );
-              })}
-            </div>
+                  </div>
+                </div>
+
+                {/* Bottom Text Area */}
+                <div className="p-6 flex flex-col flex-1">
+                  <span className="inline-block self-start rounded-full bg-[#FBF3E4] text-[#7A5F34] text-xs font-semibold px-2.5 py-0.5 mb-2.5">
+                    الخطوة 02
+                  </span>
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-[#2A1E1B] mb-2">
+                    قارني براحتك
+                  </h3>
+                  <p className="text-sm text-[#6B625A] leading-[1.85] flex-1">
+                    الأعمال والعروض والأسعار في صفحة واحدة لكل مقدم خدمة.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Card 03 — كلمي مقدم الخدمة مباشرة */}
+            <Reveal delay={0.19}>
+              <div className="group bg-white rounded-3xl border border-[#EFE4D8] overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full">
+                {/* Top Visual Stage */}
+                <div className="h-44 bg-gradient-to-br from-[#F3ECFA] via-[#FAF2F8] to-[#FCECEF] p-5 flex items-center justify-center relative overflow-hidden select-none">
+                  {/* Subtle decorative background circles */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute -top-6 -start-6 w-24 h-24 rounded-full bg-purple-200/30 blur-xl pointer-events-none"
+                  />
+
+                  {/* Sleek Mini Direct-Chat Preview */}
+                  <div className="bg-white rounded-2xl shadow-md border border-purple-100/80 p-3.5 w-full max-w-[230px] relative z-10 transition-transform duration-300 group-hover:scale-105">
+                    {/* Outgoing chat bubble */}
+                    <div className="bg-[#FCECEF] border border-rose-200/60 rounded-2xl rounded-tl-xs p-2.5 text-xs text-[#2A1E1B] leading-relaxed shadow-2xs">
+                      أهلاً، عايزة أعرف تفاصيل باقة يوم 15 أغسطس
+                    </div>
+
+                    {/* Floating badge below */}
+                    <div className="mt-2.5 flex items-center justify-center gap-1.5 bg-[#FAF2F8] border border-purple-100 rounded-full py-1 px-3 text-[11px] font-medium text-[#7E4C88]">
+                      <MessageCircle className="w-3.5 h-3.5 text-[#B84A62]" />
+                      <span>تواصل مباشر · بدون عمولة</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Text Area */}
+                <div className="p-6 flex flex-col flex-1">
+                  <span className="inline-block self-start rounded-full bg-[#F3ECFA] text-[#7E4C88] text-xs font-semibold px-2.5 py-0.5 mb-2.5">
+                    الخطوة 03
+                  </span>
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-[#2A1E1B] mb-2">
+                    كلمي مقدم الخدمة مباشرة
+                  </h3>
+                  <p className="text-sm text-[#6B625A] leading-[1.85] flex-1">
+                    واتساب أو اتصال، من غير وسيط ومن غير رسوم عليكِ.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
           </div>
 
           {/* Centered Bridal CTA */}
           <Reveal delay={0.25}>
-            <div className="mt-12 sm:mt-14 text-center">
-              <Button
-                asChild
-                variant="primary"
-                size="lg"
-                className="min-h-[48px] px-8 text-sm font-semibold shadow-xs hover:shadow-md transition-all gap-2"
+            <div className="mt-12 sm:mt-16 text-center">
+              <Link
+                href="/services"
+                className="group rounded-full bg-[#B84A62] hover:bg-[#9E3B52] text-white px-8 py-3.5 font-semibold shadow-lg shadow-rose-900/15 inline-flex items-center gap-2.5 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                <Link href="/services">
-                  <span>ابدئي تصفح الخدمات الآن</span>
-                  <ArrowLeft className="h-4 w-4" weight="bold" />
-                </Link>
-              </Button>
+                <span>ابدئي تصفح الخدمات الآن</span>
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              </Link>
             </div>
           </Reveal>
         </Container>
       </Section>
 
-      {/* 4. LATEST / TOP RATED PROVIDERS (Light Theme, Omitted if no visible providers) */}
+      {/* 5. LATEST / TOP RATED PROVIDERS (Light Theme, Omitted if no visible providers) */}
       {providers.length > 0 && (
         <Section spacing="default" className="border-b border-border bg-surface">
           <Container>
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 pb-10 sm:pb-12 border-b border-border">
               <Reveal>
-                <SectionHeading
-                  eyebrow="DIRECTORY HIGHLIGHTS"
-                  title={
-                    hasApprovedReview
+                <div className="flex flex-col gap-2">
+                  <span className="font-latin text-xs uppercase text-[#9E3B52] font-semibold tracking-wider select-none">
+                    DIRECTORY HIGHLIGHTS
+                  </span>
+                  <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-[#2A1E1B] leading-tight">
+                    {hasApprovedReview
                       ? homeContent.latestProviders.titleTopRated
-                      : homeContent.latestProviders.titleDefault
-                  }
-                />
+                      : homeContent.latestProviders.titleDefault}
+                  </h2>
+                </div>
               </Reveal>
 
-              <Button asChild variant="ghost" className="gap-2 text-xs min-h-[44px]">
-                <Link href="/services">
-                  <span>{homeContent.latestProviders.viewAll}</span>
-                  <ArrowLeft className="h-4 w-4" weight="light" />
-                </Link>
-              </Button>
+              <Link
+                href="/services"
+                className="group text-xs font-semibold text-[#B84A62] hover:text-[#9E3B52] inline-flex items-center gap-1.5 transition-colors py-2"
+              >
+                <span>{homeContent.latestProviders.viewAll}</span>
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              </Link>
             </div>
 
             <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -420,69 +553,135 @@ export default async function HomePage(props: HomePageProps = {}) {
         </Section>
       )}
 
-      {/* 5. VENDOR CTA BANNER (Warm Bridal Light-Luxury Feature Card) */}
-      <section className="w-full bg-surface py-14 sm:py-20 border-t border-border">
+      {/* 6. VENDOR CTA ("عندك خدمة أفراح في بني سويف؟") — 2-COLUMN ASYMMETRIC SPLIT */}
+      <section className="w-full bg-[#FAF6F0] py-14 sm:py-20 border-t border-[#EFE5DA]">
         <Container>
-          <div className="relative overflow-hidden rounded-3xl border border-[#E8D7C5] bg-gradient-to-br from-[#FDF6EE] via-[#FAF0E6] to-[#F5E6D8] px-6 py-12 sm:px-12 sm:py-16 text-center shadow-xs">
-            {/* Soft radial decorative accents */}
+          <div className="relative overflow-hidden rounded-3xl border border-[#ECCFC6] bg-gradient-to-bl from-[#FFF5F2] via-[#FDEAE6] to-[#F7E5D4] p-7 sm:p-10 lg:p-12 shadow-sm">
+            {/* Ambient radial glow accents */}
             <div
-              className="pointer-events-none absolute -top-24 -start-24 h-64 w-64 rounded-full bg-[#B79A6B]/15 blur-2xl"
+              className="pointer-events-none absolute -top-24 -start-24 h-72 w-72 rounded-full bg-[#B84A62]/10 blur-3xl"
               aria-hidden="true"
             />
             <div
-              className="pointer-events-none absolute -bottom-24 -end-24 h-64 w-64 rounded-full bg-[#F3CDBB]/25 blur-2xl"
+              className="pointer-events-none absolute -bottom-24 -end-24 h-72 w-72 rounded-full bg-[#C4935B]/20 blur-3xl"
               aria-hidden="true"
             />
 
-            <div className="relative z-10 mx-auto max-w-2xl">
-              <Reveal>
-                <span className="inline-block rounded-full bg-white/80 border border-[#E8D7C5] px-4 py-1 text-xs font-semibold text-accent-text mb-4 shadow-2xs">
-                  لمقدمي خدمات الزفاف
-                </span>
-                <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#17120F] leading-snug">
-                  {homeContent.forProviders.title}
-                </h2>
-                <p className="mt-4 text-sm sm:text-base text-[#6B625A] leading-[1.85]">
-                  انضم لمنصة يوم الفرح ووصّل خدماتك لعرايس بني سويف مباشرة، اعرض أعمالك وباقاتك وأيامك المتاحة بكل سهولة ومن غير أي وسيط.
-                </p>
+            {/* Subtle architectural arch line decoration */}
+            <svg
+              className="pointer-events-none absolute -bottom-10 start-1/2 -translate-x-1/2 w-96 h-96 opacity-10 text-[#B84A62]"
+              viewBox="0 0 200 200"
+              fill="none"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <circle cx="100" cy="100" r="80" strokeWidth="1" strokeDasharray="4 4" />
+              <path d="M40,160 Q100,40 160,160" strokeWidth="1.5" />
+              <path d="M60,160 Q100,70 140,160" strokeWidth="1" />
+            </svg>
 
-                {/* 3 Quick Benefit Pills with Check Icons */}
-                <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-                  {[
-                    "بدون أي عمولة",
-                    "تواصل مباشر على واتساب",
-                    "تنظيم مواعيدك بسهولة",
-                  ].map((benefit) => (
-                    <span
-                      key={benefit}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-white/90 border border-[#E8D7C5] px-3.5 py-1.5 text-xs font-medium text-[#17120F] shadow-2xs"
+            {/* 12-Column Asymmetric Split Grid */}
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+              {/* Right Side (lg:col-span-7 — RTL Start, Text & Actions) */}
+              <div className="lg:col-span-7 flex flex-col items-start text-start">
+                <Reveal>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/85 backdrop-blur-sm border border-rose-200/70 text-[#9E3B52] px-4 py-1 text-xs font-semibold mb-4 shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-[#B84A62]" />
+                    <span>لمقدمي خدمات الزفاف في بني سويف</span>
+                  </span>
+
+                  <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#2A1E1B] leading-tight mb-4">
+                    عندك خدمة أفراح في بني سويف؟
+                  </h2>
+
+                  <p className="text-sm sm:text-base text-[#6B625A] leading-[1.85] mb-6 max-w-xl">
+                    انضم لمنصة يوم الفرح ووصل خدماتك لعرايس بني سويف مباشرة. اعرض أعمالك، باقاتك، وأيامك المتاحة بكل سهولة ومن غير أي وسيط.
+                  </p>
+
+                  {/* 3 crisp benefit items styled as clean white pills */}
+                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-8">
+                    {[
+                      "بدون أي عمولة",
+                      "تواصل مباشر على واتساب",
+                      "تنظيم مواعيدك بسهولة",
+                    ].map((benefit) => (
+                      <span
+                        key={benefit}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-white px-3.5 py-1.5 text-xs font-medium text-[#2A1E1B] shadow-xs"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-[#B84A62] shrink-0" />
+                        <span>{benefit}</span>
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap items-center gap-3.5">
+                    <Link
+                      href="/join"
+                      className="group rounded-full bg-[#B84A62] hover:bg-[#9E3B52] text-white px-7 py-3.5 font-semibold shadow-md shadow-rose-900/15 inline-flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                     >
-                      <Check className="h-3.5 w-3.5 text-accent-text" weight="bold" />
-                      <span>{benefit}</span>
-                    </span>
-                  ))}
-                </div>
+                      <span>انضم كمقدم خدمة</span>
+                      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                    </Link>
 
-                {/* Action Buttons */}
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                  <Button
-                    asChild
-                    variant="primary"
-                    size="lg"
-                    className="min-h-[44px] w-full sm:w-auto px-8 rounded-full shadow-sm hover:shadow transition-all"
-                  >
-                    <Link href="/join">انضم كمقدم خدمة</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="min-h-[44px] w-full sm:w-auto px-6 rounded-full border-[#D4C3B2] bg-white/60 hover:bg-white text-[#17120F] transition-all"
-                  >
-                    <Link href="/contact">تواصل معنا</Link>
-                  </Button>
-                </div>
-              </Reveal>
+                    <Link
+                      href="/contact"
+                      className="rounded-full bg-white/90 hover:bg-white text-[#2A1E1B] border border-[#E4CFC4] px-6 py-3.5 font-medium inline-flex items-center gap-2 transition-all shadow-xs"
+                    >
+                      <span>تواصل معنا</span>
+                    </Link>
+                  </div>
+                </Reveal>
+              </div>
+
+              {/* Left Side (lg:col-span-5 — RTL End, Mini Vendor Dashboard Preview Widget) */}
+              <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
+                <Reveal delay={0.15}>
+                  <div className="bg-white/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-xl shadow-rose-950/5 border border-white flex flex-col gap-4">
+                    {/* Top row */}
+                    <div className="flex items-center justify-between pb-3 border-b border-[#F0E6DC]">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1 text-xs font-medium text-emerald-800">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>استفسار عروسة جديد</span>
+                      </div>
+                      <span className="text-xs text-[#6B625A] font-medium">الآن</span>
+                    </div>
+
+                    {/* Content: Mock bride request snippet */}
+                    <div className="bg-[#FAF5F0] rounded-xl p-3.5 border border-[#EFE5DA] flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-[#FCECEF] flex items-center justify-center text-[#B84A62] shrink-0">
+                        <CalendarCheck className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-[#2A1E1B]">استفسار جديد عن التوفر</div>
+                        <div className="text-xs text-[#6B625A] mt-0.5 leading-relaxed">
+                          عروسة بتسأل عن التوفر ليوم 18 سبتمبر — قاعة / باقة كاملة
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom stat tiles row */}
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div className="bg-[#FCFAF8] rounded-xl p-3 border border-[#EFE5DA] text-center shadow-xs">
+                        <div className="flex items-center justify-center gap-1 text-[#B84A62] mb-1">
+                          <ShieldCheck className="w-4 h-4" />
+                          <span className="font-bold text-lg font-latin">0%</span>
+                        </div>
+                        <span className="text-xs text-[#6B625A]">عمولة المنصة</span>
+                      </div>
+
+                      <div className="bg-[#FCFAF8] rounded-xl p-3 border border-[#EFE5DA] text-center shadow-xs">
+                        <div className="flex items-center justify-center gap-1 text-[#128C7E] mb-1">
+                          <MessageCircle className="w-4 h-4" />
+                          <span className="font-bold text-base">مباشر</span>
+                        </div>
+                        <span className="text-xs text-[#6B625A]">تواصل واتساب</span>
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+              </div>
             </div>
           </div>
         </Container>

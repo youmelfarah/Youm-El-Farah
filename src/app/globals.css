@@ -261,7 +261,7 @@ h6 {
   background-color: var(--journey-bg);
   color: var(--journey-text);
   transition: background-color 1.4s cubic-bezier(0.22, 1, 0.36, 1),
-              color 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+    color 1.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .journey-chip {
@@ -314,6 +314,7 @@ h6 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .journey-section,
   .journey-chip,
   .journey-circle-box {
