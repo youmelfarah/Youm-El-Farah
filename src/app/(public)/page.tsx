@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowLeft,
+  CalendarCheck,
+  Sparkle,
+  ChatCircle,
+  Check,
+} from "@phosphor-icons/react/dist/ssr";
 import { prisma } from "@/lib/prisma";
 import { visibleProviderWhere } from "@/lib/provider-visibility";
 import { getWeddingDateFromCookie, validateWeddingDate } from "@/lib/wedding-date";
@@ -299,33 +305,83 @@ export default async function HomePage(props: HomePageProps = {}) {
         </Container>
       </Section>
 
-      {/* 3. HOW IT WORKS (Light Theme, Typographic 3 Columns) */}
-      <Section spacing="default" className="border-b border-border bg-surface-raised">
+      {/* 3. HOW IT WORKS (Refined Bridal 3-Step Experience) */}
+      <Section spacing="default" className="border-b border-border bg-surface-raised/60 py-16 sm:py-20">
         <Container>
           <Reveal>
             <SectionHeading
               eyebrow={homeContent.howItWorks.eyebrow}
               title={homeContent.howItWorks.title}
+              align="center"
+              className="mb-12 sm:mb-16"
             />
           </Reveal>
 
-          <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 sm:gap-10">
-            {homeContent.howItWorks.steps.map((step, idx) => (
-              <Reveal key={step.number} delay={idx * 0.04}>
-                <div className="flex flex-col gap-3 p-6 rounded-[4px] border border-border bg-surface transition-colors">
-                  <span className="font-latin text-3xl sm:text-4xl font-medium text-accent-text">
-                    {step.number}
-                  </span>
-                  <h3 className="font-display text-lg sm:text-xl font-bold text-text">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-text-muted leading-[1.85]">
-                    {step.description}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
+          {/* Steps Grid with Desktop Connector Line */}
+          <div className="relative">
+            {/* Desktop horizontal decorative dashed connector line */}
+            <div
+              aria-hidden="true"
+              className="hidden md:block absolute top-[52px] start-[16%] end-[16%] border-t-2 border-dashed border-[#EAE0D5] -z-0 pointer-events-none"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative z-10">
+              {homeContent.howItWorks.steps.map((step, idx) => {
+                const StepIcon =
+                  idx === 0
+                    ? CalendarCheck
+                    : idx === 1
+                    ? Sparkle
+                    : ChatCircle;
+
+                return (
+                  <Reveal key={step.number} delay={idx * 0.08}>
+                    <div className="group relative flex flex-col h-full bg-white rounded-2xl border border-[#EAE0D5] p-6 sm:p-7 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                      {/* Step Number Watermark (Top-Left in RTL) */}
+                      <span
+                        aria-hidden="true"
+                        className="absolute top-4 end-5 font-latin text-5xl sm:text-6xl font-bold text-[#EAE0D5]/50 group-hover:text-[#D8C7B5]/60 transition-colors select-none pointer-events-none leading-none"
+                      >
+                        {step.number}
+                      </span>
+
+                      {/* Soft Pastel / Warm-Tinted Icon Badge */}
+                      <div className="relative z-10 w-12 h-12 rounded-xl bg-[#FDF6EE] border border-[#F3E7D8] flex items-center justify-center mb-5 text-[#7A5F34] shadow-xs group-hover:scale-105 group-hover:bg-[#FBEFD9] transition-all duration-300">
+                        <StepIcon className="h-6 w-6" weight="regular" />
+                      </div>
+
+                      {/* Step Title */}
+                      <h3 className="relative z-10 font-display text-lg sm:text-xl font-bold text-text mb-2.5">
+                        {step.title}
+                      </h3>
+
+                      {/* Step Description */}
+                      <p className="relative z-10 text-sm text-text-muted leading-[1.85] flex-1">
+                        {step.description}
+                      </p>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
           </div>
+
+          {/* Centered Bridal CTA */}
+          <Reveal delay={0.25}>
+            <div className="mt-12 sm:mt-14 text-center">
+              <Button
+                asChild
+                variant="primary"
+                size="lg"
+                className="min-h-[48px] px-8 text-sm font-semibold shadow-xs hover:shadow-md transition-all gap-2"
+              >
+                <Link href="/services">
+                  <span>ابدئي تصفح الخدمات الآن</span>
+                  <ArrowLeft className="h-4 w-4" weight="bold" />
+                </Link>
+              </Button>
+            </div>
+          </Reveal>
         </Container>
       </Section>
 
@@ -353,7 +409,7 @@ export default async function HomePage(props: HomePageProps = {}) {
               </Button>
             </div>
 
-            <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {providers.map((p, idx) => (
                 <Reveal key={p.id} delay={idx * 0.04}>
                   <ProviderCard provider={p} priority={idx < 3} />
@@ -364,29 +420,70 @@ export default async function HomePage(props: HomePageProps = {}) {
         </Section>
       )}
 
-      {/* 5. FOR PROVIDERS BAND (Dark Theme) */}
-      <section
-        data-theme="dark"
-        style={{ backgroundColor: "var(--surface)", color: "var(--text)" }}
-        className="w-full bg-surface text-text border-t border-border py-16 sm:py-24"
-      >
+      {/* 5. VENDOR CTA BANNER (Warm Bridal Light-Luxury Feature Card) */}
+      <section className="w-full bg-surface py-14 sm:py-20 border-t border-border">
         <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal>
-              <h2 className="font-display text-2xl sm:text-4xl font-bold text-text leading-snug">
-                {homeContent.forProviders.title}
-              </h2>
-              <p className="mt-4 text-sm sm:text-base text-text-muted leading-[1.85]">
-                {homeContent.forProviders.paragraph}
-              </p>
-              <div className="mt-8">
-                <Button asChild variant="primary" size="lg" className="min-h-[44px]">
-                  <Link href={homeContent.forProviders.buttonHref}>
-                    {homeContent.forProviders.button}
-                  </Link>
-                </Button>
-              </div>
-            </Reveal>
+          <div className="relative overflow-hidden rounded-3xl border border-[#E8D7C5] bg-gradient-to-br from-[#FDF6EE] via-[#FAF0E6] to-[#F5E6D8] px-6 py-12 sm:px-12 sm:py-16 text-center shadow-xs">
+            {/* Soft radial decorative accents */}
+            <div
+              className="pointer-events-none absolute -top-24 -start-24 h-64 w-64 rounded-full bg-[#B79A6B]/15 blur-2xl"
+              aria-hidden="true"
+            />
+            <div
+              className="pointer-events-none absolute -bottom-24 -end-24 h-64 w-64 rounded-full bg-[#F3CDBB]/25 blur-2xl"
+              aria-hidden="true"
+            />
+
+            <div className="relative z-10 mx-auto max-w-2xl">
+              <Reveal>
+                <span className="inline-block rounded-full bg-white/80 border border-[#E8D7C5] px-4 py-1 text-xs font-semibold text-accent-text mb-4 shadow-2xs">
+                  لمقدمي خدمات الزفاف
+                </span>
+                <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#17120F] leading-snug">
+                  {homeContent.forProviders.title}
+                </h2>
+                <p className="mt-4 text-sm sm:text-base text-[#6B625A] leading-[1.85]">
+                  انضم لمنصة يوم الفرح ووصّل خدماتك لعرايس بني سويف مباشرة، اعرض أعمالك وباقاتك وأيامك المتاحة بكل سهولة ومن غير أي وسيط.
+                </p>
+
+                {/* 3 Quick Benefit Pills with Check Icons */}
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+                  {[
+                    "بدون أي عمولة",
+                    "تواصل مباشر على واتساب",
+                    "تنظيم مواعيدك بسهولة",
+                  ].map((benefit) => (
+                    <span
+                      key={benefit}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white/90 border border-[#E8D7C5] px-3.5 py-1.5 text-xs font-medium text-[#17120F] shadow-2xs"
+                    >
+                      <Check className="h-3.5 w-3.5 text-accent-text" weight="bold" />
+                      <span>{benefit}</span>
+                    </span>
+                  ))}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                  <Button
+                    asChild
+                    variant="primary"
+                    size="lg"
+                    className="min-h-[44px] w-full sm:w-auto px-8 rounded-full shadow-sm hover:shadow transition-all"
+                  >
+                    <Link href="/join">انضم كمقدم خدمة</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="min-h-[44px] w-full sm:w-auto px-6 rounded-full border-[#D4C3B2] bg-white/60 hover:bg-white text-[#17120F] transition-all"
+                  >
+                    <Link href="/contact">تواصل معنا</Link>
+                  </Button>
+                </div>
+              </Reveal>
+            </div>
           </div>
         </Container>
       </section>

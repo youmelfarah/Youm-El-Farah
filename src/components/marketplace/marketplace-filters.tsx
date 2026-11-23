@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { MagnifyingGlass, FadersHorizontal, ArrowsDownUp } from "@phosphor-icons/react";
+import { MagnifyingGlass, FadersHorizontal, SlidersHorizontal, ArrowsDownUp } from "@phosphor-icons/react";
 import { DISTRICT_OPTIONS } from "@/lib/districts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -311,10 +311,10 @@ export function MarketplaceFilters({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="min-h-[44px] gap-2 text-xs"
+                    className="min-h-[44px] gap-2 text-xs px-3.5"
                   >
-                    <FadersHorizontal className="h-4 w-4" weight="light" />
-                    <span>تصفية</span>
+                    <SlidersHorizontal className="h-4 w-4" weight="light" />
+                    <span>تصفية النتائج</span>
                     {activeCount > 0 && (
                       <Badge variant="accent" size="sm" className="px-1.5 py-0 h-4 min-w-[16px]">
                         {activeCount}

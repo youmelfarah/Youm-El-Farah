@@ -29,7 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Container } from "@/components/ui/container";
-import { WeddingDatePicker } from "@/components/wedding-date/wedding-date-picker";
 import { useSession, signOut } from "@/lib/auth-client";
 import { navigationContent } from "@/content/navigation";
 import { cn } from "@/lib/cn";
@@ -41,18 +40,13 @@ export interface PublicHeaderProps {
 
 export function PublicHeader({
   variant = "solid",
-  initialWeddingDate = null,
+  initialWeddingDate: _initialWeddingDate,
 }: PublicHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const [isOpen, setIsOpen] = React.useState(false);
-  const [weddingDate, setWeddingDate] = React.useState<string | null>(initialWeddingDate);
   const [isScrolled, setIsScrolled] = React.useState(false);
-
-  React.useEffect(() => {
-    setWeddingDate(initialWeddingDate);
-  }, [initialWeddingDate]);
 
   // When transparent, detect scroll to transition smoothly to solid surface
   React.useEffect(() => {
@@ -131,15 +125,7 @@ export function PublicHeader({
 
         {/* Header Right Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Wedding Date Chip/Picker */}
-          <WeddingDatePicker
-            currentDate={weddingDate}
-            onSelectDate={(d) => setWeddingDate(d)}
-            onClearDate={() => setWeddingDate(null)}
-            variant={isEffectiveTransparent ? "transparent" : "solid"}
-          />
-
-          {/* Secondary Join Button (Desktop) */}
+          {/* Join CTA Button (Desktop) */}
           <Button
             asChild
             variant="secondary"
@@ -260,23 +246,6 @@ export function PublicHeader({
                 </SheetTitle>
               </SheetHeader>
 
-              {/* Date Chip on Mobile */}
-              <div className="py-2">
-                <p className="text-xs text-text-muted mb-2 font-medium">تاريخ يوم الفرح:</p>
-                <WeddingDatePicker
-                  currentDate={weddingDate}
-                  onSelectDate={(d) => {
-                    setWeddingDate(d);
-                    setIsOpen(false);
-                  }}
-                  onClearDate={() => {
-                    setWeddingDate(null);
-                    setIsOpen(false);
-                  }}
-                  className="w-full justify-start"
-                />
-              </div>
-
               {/* Navigation Links */}
               <nav
                 aria-label="روابط القائمة للجوال"
@@ -311,7 +280,9 @@ export function PublicHeader({
                   </Link>
                 </Button>
 
-                {user ? (
+                {isPending ? (
+                  <div className="h-11 w-full animate-pulse rounded-[4px] bg-surface-muted" />
+                ) : user ? (
                   <div className="flex flex-col gap-2 pt-2 border-t border-border/60">
                     <div className="px-1 py-1 text-xs">
                       <p className="font-semibold text-text">{user.name || "مستخدم مسجل"}</p>
