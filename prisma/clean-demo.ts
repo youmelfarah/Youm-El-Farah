@@ -49,6 +49,22 @@ async function main() {
     const deletedOffers = await prisma.offer.deleteMany({
       where: { providerId: { in: demoProviderIds } },
     });
+    const deletedReports = await prisma.reviewReport.deleteMany({
+      where: {
+        OR: [
+          { reporterId: { in: demoUserIds } },
+          { review: { providerId: { in: demoProviderIds } } },
+        ],
+      },
+    });
+    const deletedLeads = await prisma.lead.deleteMany({
+      where: {
+        OR: [
+          { providerId: { in: demoProviderIds } },
+          { userId: { in: demoUserIds } },
+        ],
+      },
+    });
     const deletedReviews = await prisma.review.deleteMany({
       where: { providerId: { in: demoProviderIds } },
     });
@@ -63,7 +79,7 @@ async function main() {
     });
 
     console.log(
-      `Deleted relations: ${deletedSubs.count} subscriptions, ${deletedPC.count} categories, ${deletedOffers.count} offers, ${deletedMedia.count} media, ${deletedStats.count} daily stats.`
+      `Deleted relations: ${deletedSubs.count} subscriptions, ${deletedPC.count} categories, ${deletedOffers.count} offers, ${deletedMedia.count} media, ${deletedStats.count} daily stats, ${deletedReviews.count} reviews, ${deletedReports.count} reports, ${deletedLeads.count} leads, ${deletedFavorites.count} favorites.`
     );
   }
 

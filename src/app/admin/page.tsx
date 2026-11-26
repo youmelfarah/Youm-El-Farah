@@ -13,6 +13,7 @@ import {
 import { formatArabicDateString } from "@/lib/calendar-dates";
 import { DISTRICT_LABELS } from "@/lib/districts";
 import { getSubscriptionState } from "@/lib/subscription";
+import { isPhoneVerificationRequired } from "@/lib/review-eligibility";
 import { formatMoney } from "@/lib/format-money";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -417,6 +418,50 @@ export default async function AdminDashboardOverviewPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* System Status & Feature Flags Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>حالة النظام والإعدادات</CardTitle>
+          <CardDescription>
+            مؤشرات تفعيل الميزات والتكاملات الخارجية في البيئة الحالية
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+            <div className="rounded-[4px] border border-border bg-surface-muted/50 p-3 flex items-center justify-between gap-2">
+              <span className="text-text-muted">تأكيد الهاتف للتقييم</span>
+              <Badge variant={isPhoneVerificationRequired() ? "success" : "neutral"} size="sm">
+                {isPhoneVerificationRequired() ? "مفعّل" : "معطّل"}
+              </Badge>
+            </div>
+            <div className="rounded-[4px] border border-border bg-surface-muted/50 p-3 flex items-center justify-between gap-2">
+              <span className="text-text-muted">مزود SMS</span>
+              <Badge variant="neutral" size="sm" className="font-latin">
+                {process.env.SMS_PROVIDER || "console"}
+              </Badge>
+            </div>
+            <div className="rounded-[4px] border border-border bg-surface-muted/50 p-3 flex items-center justify-between gap-2">
+              <span className="text-text-muted">Webhook الطلبات</span>
+              <Badge variant={process.env.LEADS_WEBHOOK_URL ? "success" : "neutral"} size="sm">
+                {process.env.LEADS_WEBHOOK_URL ? "مفعّل" : "غير مضبوط"}
+              </Badge>
+            </div>
+            <div className="rounded-[4px] border border-border bg-surface-muted/50 p-3 flex items-center justify-between gap-2">
+              <span className="text-text-muted">Cloudinary</span>
+              <Badge variant={process.env.CLOUDINARY_CLOUD_NAME ? "success" : "warning"} size="sm">
+                {process.env.CLOUDINARY_CLOUD_NAME ? "مفعّل" : "غير مضبوط"}
+              </Badge>
+            </div>
+            <div className="rounded-[4px] border border-border bg-surface-muted/50 p-3 flex items-center justify-between gap-2">
+              <span className="text-text-muted">Google OAuth</span>
+              <Badge variant={process.env.GOOGLE_CLIENT_ID ? "success" : "warning"} size="sm">
+                {process.env.GOOGLE_CLIENT_ID ? "مفعّل" : "غير مضبوط"}
+              </Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

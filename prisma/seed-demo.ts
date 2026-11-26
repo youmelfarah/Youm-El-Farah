@@ -11,6 +11,8 @@ import {
   parseDateString,
 } from "../src/lib/calendar-dates";
 import { computeRankScore } from "../src/lib/ranking";
+import { recomputeProviderRatingAggregates } from "../src/lib/review-aggregates";
+import { createDefaultOpeningHours } from "../src/lib/opening-hours";
 
 async function main() {
   console.log("🌱 Seeding comprehensive demo providers, offers, blocked dates, and stats...");
@@ -583,7 +585,147 @@ async function main() {
     }
   }
 
-  console.log("✅ Demo seed completed successfully with diverse providers, offers, and stats!");
+  // ─── Seed Demo Profile Enrichments, Visitors, Reviews, Favorites, and Leads ───
+  await prisma.provider.update({
+    where: { id: prov1.id },
+    data: {
+      mapsUrl: "https://maps.google.com/?q=29.0661,31.0994",
+      highlights: [
+        "باركينج خاص مجاني",
+        "تكييف مركزي بالكامل",
+        "غرفة تجهيز للعروسة",
+        "إضاءة وصوت حديث",
+      ],
+      openingHours: createDefaultOpeningHours(),
+      faqs: [
+        {
+          question: "هل يمكن معاينة القاعة قبل الحجز؟",
+          answer: "نعم، المعاينة متاحة يومياً خلال ساعات العمل الرسمية بعد التنسيق المسبق.",
+        },
+        {
+          question: "هل تشمل الباقة الكوشة والدي جي؟",
+          answer: "توجد باقات شاملة للكوشة والدي جي، ويمكن تخصيص أي تفاصيل إضافية حسب رغبة العروسين.",
+        },
+      ],
+    },
+  });
+
+  const visitor1 = await prisma.user.upsert({
+    where: { email: "demo-visitor1@example.com" },
+    update: { name: "نورا محمد", role: "VISITOR", isActive: true },
+    create: {
+      name: "نورا محمد",
+      email: "demo-visitor1@example.com",
+      role: "VISITOR",
+      emailVerified: true,
+      isActive: true,
+    },
+  });
+
+  const visitor2 = await prisma.user.upsert({
+    where: { email: "demo-visitor2@example.com" },
+    update: { name: "سارة علي", role: "VISITOR", isActive: true },
+    create: {
+      name: "سارة علي",
+      email: "demo-visitor2@example.com",
+      role: "VISITOR",
+      emailVerified: true,
+      isActive: true,
+    },
+  });
+
+  // Sample Reviews (Approved + Reply, Pending, Rejected)
+  await prisma.review.upsert({
+    where: { providerId_userId: { providerId: prov1.id, userId: visitor1.id } },
+    update: {},
+    create: {
+      providerId: prov1.id,
+      userId: visitor1.id,
+      rating: 5,
+      comment: "المكان منظم جداً وفريق العمل متعاون من أول المعاينة حتى نهاية الفرح.",
+      status: "APPROVED",
+      moderatedAt: now,
+      moderatedById: admin.id,
+      providerReply: "نورتونا وأسعدنا التعامل معكم، ألف مبروك!",
+      providerRepliedAt: now,
+    },
+  });
+
+  await prisma.review.upsert({
+    where: { providerId_userId: { providerId: prov1.id, userId: visitor2.id } },
+    update: {},
+    create: {
+      providerId: prov1.id,
+      userId: visitor2.id,
+      rating: 4,
+      comment: "خدمة ممتازة والتزام بالمواعيد.",
+      status: "PENDING",
+    },
+  });
+
+  await prisma.review.upsert({
+    where: { providerId_userId: { providerId: prov2.id, userId: visitor1.id } },
+    update: {},
+    create: {
+      providerId: prov2.id,
+      userId: visitor1.id,
+      rating: 5,
+      comment: "صور السيشن طلعت تحفة وتسليم الألبوم كان في ميعاده.",
+      status: "APPROVED",
+      moderatedAt: now,
+      moderatedById: admin.id,
+    },
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await recomputeProviderRatingAggregates(tx, prov1.id);
+    await recomputeProviderRatingAggregates(tx, prov2.id);
+  });
+
+  // Sample Favorites
+  await prisma.favorite.upsert({
+    where: { userId_providerId: { userId: visitor1.id, providerId: prov1.id } },
+    update: {},
+    create: { userId: visitor1.id, providerId: prov1.id },
+  });
+  await prisma.favorite.upsert({
+    where: { userId_providerId: { userId: visitor1.id, providerId: prov2.id } },
+    update: {},
+    create: { userId: visitor1.id, providerId: prov2.id },
+  });
+
+  // Sample Leads
+  const existingLeadCount = await prisma.lead.count({
+    where: { userId: visitor1.id },
+  });
+  if (existingLeadCount === 0) {
+    const futureWeddingStr = addMonthsCairo(toCairoDateString(now), 2);
+    await prisma.lead.createMany({
+      data: [
+        {
+          providerId: prov1.id,
+          userId: visitor1.id,
+          name: "نورا محمد",
+          phone: "+201012345678",
+          weddingDate: dateStringToPrismaDate(futureWeddingStr),
+          message: "لو سمحتي عايزة أعرف تفاصيل باقة الفرح لـ 250 فرد.",
+          status: "NEW",
+        },
+        {
+          providerId: prov2.id,
+          userId: visitor1.id,
+          name: "نورا محمد",
+          phone: "+201012345678",
+          weddingDate: dateStringToPrismaDate(futureWeddingStr),
+          message: "هل متاح تصوير فيديو + فوتو في نفس اليوم؟",
+          status: "CONTACTED",
+          providerNote: "تم التواصل عبر الواتساب وإرسال الباقات.",
+        },
+      ],
+    });
+  }
+
+  console.log("✅ Demo seed completed successfully with diverse providers, offers, stats, reviews, favorites, and leads!");
 }
 
 main()
