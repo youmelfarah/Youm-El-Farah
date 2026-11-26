@@ -11,6 +11,7 @@ import {
   WarningCircle,
   XCircle,
   Star,
+  PaperPlaneTilt,
 } from "@phosphor-icons/react";
 import { LogoutButton } from "@/components/logout-button";
 import { Logo } from "@/components/brand/Logo";
@@ -20,6 +21,7 @@ interface DashboardShellProps {
   providerName?: string | null;
   providerStatus?: "PENDING" | "APPROVED" | "SUSPENDED" | null;
   userName: string;
+  newLeadsCount?: number;
   children: React.ReactNode;
 }
 
@@ -29,6 +31,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/offers", label: "العروض والباقات", shortLabel: "العروض", icon: Tag },
   { href: "/dashboard/gallery", label: "معرض الصور", shortLabel: "المعرض", icon: ImageIcon },
   { href: "/dashboard/availability", label: "جدول المواعيد", shortLabel: "المواعيد", icon: CalendarBlank },
+  { href: "/dashboard/leads", label: "الطلبات", shortLabel: "الطلبات", icon: PaperPlaneTilt, hasLeadsBadge: true },
   { href: "/dashboard/reviews", label: "التقييمات", shortLabel: "التقييمات", icon: Star },
 ] as const;
 
@@ -36,6 +39,7 @@ export function DashboardShell({
   providerName,
   providerStatus,
   userName,
+  newLeadsCount = 0,
   children,
 }: DashboardShellProps) {
   const pathname = usePathname();
@@ -86,6 +90,11 @@ export function DashboardShell({
                   >
                     <Icon className="h-4 w-4" weight={active ? "bold" : "light"} />
                     <span>{item.label}</span>
+                    {"hasLeadsBadge" in item && item.hasLeadsBadge && newLeadsCount > 0 && (
+                      <span className="rounded-[2px] bg-accent px-1.5 py-0.5 font-latin text-[10px] font-bold text-accent-contrast">
+                        {newLeadsCount}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -135,7 +144,7 @@ export function DashboardShell({
           aria-label="التنقل السفلي للجوال"
           className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface-raised md:hidden"
         >
-          <div className="grid grid-cols-6">
+          <div className="grid grid-cols-7">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;
@@ -144,7 +153,7 @@ export function DashboardShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex min-h-[52px] flex-col items-center justify-center gap-1 py-1 text-[10px] font-medium transition-colors",
+                    "relative flex min-h-[52px] flex-col items-center justify-center gap-1 py-1 text-[10px] font-medium transition-colors",
                     active
                       ? "text-text font-semibold bg-surface-muted"
                       : "text-text-muted hover:text-text"
@@ -152,6 +161,11 @@ export function DashboardShell({
                 >
                   <Icon className="h-5 w-5" weight={active ? "bold" : "light"} />
                   <span>{item.shortLabel}</span>
+                  {"hasLeadsBadge" in item && item.hasLeadsBadge && newLeadsCount > 0 && (
+                    <span className="absolute top-1 end-2 rounded-[2px] bg-accent px-1 font-latin text-[9px] font-bold text-accent-contrast">
+                      {newLeadsCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}

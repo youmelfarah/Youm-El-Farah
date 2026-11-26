@@ -28,7 +28,18 @@ export default async function ProviderDetailPage(props: {
 
   const { id } = await props.params;
 
-  const [provider, offersCount, imagesCount, videosCount, blockedDatesCount, auditLogs, stats] =
+  const [
+    provider,
+    offersCount,
+    imagesCount,
+    videosCount,
+    blockedDatesCount,
+    leadsTotalCount,
+    leadsNewCount,
+    leadsBookedCount,
+    auditLogs,
+    stats,
+  ] =
     await Promise.all([
       prisma.provider.findUnique({
         where: { id },
@@ -56,6 +67,9 @@ export default async function ProviderDetailPage(props: {
       prisma.media.count({ where: { providerId: id, type: "IMAGE" } }),
       prisma.media.count({ where: { providerId: id, type: "VIDEO" } }),
       prisma.blockedDate.count({ where: { providerId: id } }),
+      prisma.lead.count({ where: { providerId: id } }),
+      prisma.lead.count({ where: { providerId: id, status: "NEW" } }),
+      prisma.lead.count({ where: { providerId: id, status: "BOOKED" } }),
       prisma.auditLog.findMany({
         where: { providerId: id },
         orderBy: { createdAt: "desc" },
@@ -127,6 +141,9 @@ export default async function ProviderDetailPage(props: {
           images: imagesCount,
           videos: videosCount,
           blockedDates: blockedDatesCount,
+          leadsTotal: leadsTotalCount,
+          leadsNew: leadsNewCount,
+          leadsBooked: leadsBookedCount,
         },
         user: provider.user,
         subscriptionSummary: {

@@ -39,22 +39,33 @@ export default async function DashboardPage() {
   }
 
   const now = new Date();
-  const [offerCount, imageCount, videoCount, activeSubscription, stats] =
-    await Promise.all([
-      prisma.offer.count({ where: { providerId: provider.id } }),
-      prisma.media.count({ where: { providerId: provider.id, type: "IMAGE" } }),
-      prisma.media.count({ where: { providerId: provider.id, type: "VIDEO" } }),
-      prisma.subscription.findFirst({
-        where: {
-          providerId: provider.id,
-          status: "ACTIVE",
-          startsAt: { lte: now },
-          endsAt: { gt: now },
-        },
-        orderBy: { endsAt: "desc" },
-      }),
-      getProviderStatsSummary(provider.id),
-    ]);
+  const [
+    offerCount,
+    imageCount,
+    videoCount,
+    activeSubscription,
+    stats,
+    leadsTotalCount,
+    leadsNewCount,
+    leadsBookedCount,
+  ] = await Promise.all([
+    prisma.offer.count({ where: { providerId: provider.id } }),
+    prisma.media.count({ where: { providerId: provider.id, type: "IMAGE" } }),
+    prisma.media.count({ where: { providerId: provider.id, type: "VIDEO" } }),
+    prisma.subscription.findFirst({
+      where: {
+        providerId: provider.id,
+        status: "ACTIVE",
+        startsAt: { lte: now },
+        endsAt: { gt: now },
+      },
+      orderBy: { endsAt: "desc" },
+    }),
+    getProviderStatsSummary(provider.id),
+    prisma.lead.count({ where: { providerId: provider.id } }),
+    prisma.lead.count({ where: { providerId: provider.id, status: "NEW" } }),
+    prisma.lead.count({ where: { providerId: provider.id, status: "BOOKED" } }),
+  ]);
 
   const limits = getProviderLimits(provider);
   const isVisible =
@@ -161,6 +172,45 @@ export default async function DashboardPage() {
 
       {/* 30-Day Activity & Engagement Stats */}
       <ProviderStatsCard stats={stats} />
+
+      {/* Leads Summary */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <CardTitle>ملخص طلبات عروض الأسعار</CardTitle>
+              <CardDescription>
+                متابعة طلبات العرائس الواردة والحجوزات المؤكدة
+              </CardDescription>
+            </div>
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/dashboard/leads">إدارة الطلبات</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-[4px] border border-border bg-surface-raised p-4">
+              <span className="text-xs text-text-muted">إجمالي الطلبات</span>
+              <p className="mt-1 font-latin text-2xl font-bold text-text">
+                {leadsTotalCount}
+              </p>
+            </div>
+            <div className="rounded-[4px] border border-border bg-surface-raised p-4">
+              <span className="text-xs text-text-muted">طلبات جديدة (NEW)</span>
+              <p className="mt-1 font-latin text-2xl font-bold text-accent-text">
+                {leadsNewCount}
+              </p>
+            </div>
+            <div className="rounded-[4px] border border-border bg-surface-raised p-4">
+              <span className="text-xs text-text-muted">تم الحجز (BOOKED)</span>
+              <p className="mt-1 font-latin text-2xl font-bold text-success">
+                {leadsBookedCount}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Subscription Card */}
       <Card>

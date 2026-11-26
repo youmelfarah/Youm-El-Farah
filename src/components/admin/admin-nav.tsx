@@ -13,6 +13,7 @@ import {
   UserGear,
   ClockCounterClockwise,
   Star,
+  PaperPlaneTilt,
 } from "@phosphor-icons/react";
 import { LogoutButton } from "@/components/logout-button";
 import { Logo } from "@/components/brand/Logo";
@@ -32,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/subscriptions", label: "الاشتراكات", icon: CreditCard },
   { href: "/admin/categories", label: "الفئات", icon: Tag },
   { href: "/admin/reviews", label: "التقييمات", icon: Star, badgeKey: "pendingReviews" },
+  { href: "/admin/leads", label: "الطلبات", icon: PaperPlaneTilt },
   { href: "/admin/provider-accounts", label: "حسابات المقدمين", icon: UserGear },
   { href: "/admin/audit-log", label: "سجل النشاط", icon: ClockCounterClockwise },
 ];

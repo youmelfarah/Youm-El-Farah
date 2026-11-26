@@ -58,6 +58,9 @@ interface ProviderDetailProps {
       images: number;
       videos: number;
       blockedDates: number;
+      leadsTotal: number;
+      leadsNew: number;
+      leadsBooked: number;
     };
     user: {
       id: string;
@@ -720,6 +723,28 @@ export function ProviderDetailClient({ provider }: ProviderDetailProps) {
                   <p className="text-[11px] text-text-muted">الأيام المحجوزة</p>
                   <p className="text-base font-bold text-text mt-0.5">
                     {provider.counts.blockedDates}
+                  </p>
+                </div>
+              </div>
+
+              {/* Leads Counts */}
+              <div className="grid grid-cols-3 gap-3 border-t border-border pt-3">
+                <div className="rounded-lg border border-border bg-surface-muted p-2.5 text-center">
+                  <p className="text-[11px] text-text-muted">إجمالي الطلبات</p>
+                  <p className="text-base font-bold font-latin text-text mt-0.5">
+                    {provider.counts.leadsTotal}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-surface-muted p-2.5 text-center">
+                  <p className="text-[11px] text-text-muted">طلبات جديدة</p>
+                  <p className="text-base font-bold font-latin text-accent-text mt-0.5">
+                    {provider.counts.leadsNew}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-surface-muted p-2.5 text-center">
+                  <p className="text-[11px] text-text-muted">تم الحجز</p>
+                  <p className="text-base font-bold font-latin text-success mt-0.5">
+                    {provider.counts.leadsBooked}
                   </p>
                 </div>
               </div>

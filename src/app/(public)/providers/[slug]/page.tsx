@@ -42,12 +42,16 @@ import { ProviderGallery } from "@/components/marketplace/provider-gallery";
 import { ProviderAvailabilityCalendar } from "@/components/marketplace/provider-availability-calendar";
 import { ProviderContactActions } from "@/components/marketplace/provider-contact-actions";
 import {
+  OfferInquiryButton,
+  PendingLeadActionHandler,
+} from "@/components/marketplace/lead-request-dialog";
+import {
   ProviderReviewsSection,
   type PublicReviewItem,
 } from "@/components/marketplace/provider-reviews-section";
 import { formatReviewerDisplayName } from "@/lib/display-name";
 import { toCairoDateString } from "@/lib/cairo-time";
-import { formatArabicDateString } from "@/lib/calendar-dates";
+import { formatArabicDateString, getCairoTodayString } from "@/lib/calendar-dates";
 import { isPhoneVerificationRequired } from "@/lib/review-eligibility";
 
 export const revalidate = 300;
@@ -248,7 +252,7 @@ export default async function ProviderProfilePage({
         ? Promise.all([
             prisma.user.findUnique({
               where: { id: session.user.id },
-              select: { id: true, role: true, phoneVerifiedAt: true },
+              select: { id: true, name: true, role: true, phone: true, phoneVerifiedAt: true },
             }),
             prisma.review.findUnique({
               where: {
@@ -330,6 +334,15 @@ export default async function ProviderProfilePage({
 
   const viewerUser = viewerDbState?.[0] ?? null;
   const viewerExistingReview = viewerDbState?.[1] ?? null;
+  const cairoToday = getCairoTodayString();
+  const leadViewer = {
+    isSignedIn: Boolean(session?.user?.id),
+    userId: session?.user?.id ?? null,
+    userRole: viewerUser?.role ?? null,
+    name: viewerUser?.name ?? session?.user?.name ?? "",
+    phone: viewerUser?.phone ?? null,
+  };
+  const offerOptions = provider.offers.map((o) => ({ id: o.id, title: o.title }));
 
   // WhatsApp & Phone urls
   const whatsappUrl = buildWhatsAppUrl({
@@ -619,12 +632,33 @@ export default async function ProviderProfilePage({
             <span className="text-xs text-text-muted hidden sm:inline">
               للاستفسار والحجز المباشر:
             </span>
-            <ProviderContactActions
-              providerId={provider.id}
-              whatsappUrl={whatsappUrl}
-              phoneDigits={phoneDigits}
-            />
+            <Suspense fallback={null}>
+              <ProviderContactActions
+                providerId={provider.id}
+                providerName={provider.name}
+                providerSlug={provider.slug}
+                providerUserId={provider.userId}
+                whatsappUrl={whatsappUrl}
+                phoneDigits={phoneDigits}
+                offers={offerOptions}
+                defaultWeddingDate={weddingDate}
+                minWeddingDate={cairoToday}
+                viewer={leadViewer}
+              />
+            </Suspense>
           </div>
+          <Suspense fallback={null}>
+            <PendingLeadActionHandler
+              providerId={provider.id}
+              providerName={provider.name}
+              providerSlug={provider.slug}
+              providerUserId={provider.userId}
+              offers={offerOptions}
+              defaultWeddingDate={weddingDate}
+              minWeddingDate={cairoToday}
+              viewer={leadViewer}
+            />
+          </Suspense>
 
           {/* (8) Social Links as text links */}
           <div className="flex items-center gap-4 text-xs">
@@ -704,25 +738,41 @@ export default async function ProviderProfilePage({
                       )}
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+                    <div className="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-2">
                       <span className="font-latin font-bold text-base text-text">
                         {offer.price !== null
                           ? formatMoney(offer.price)
                           : "تواصلي لمعرفة السعر"}
                       </span>
 
-                      {whatsappUrl && (
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs text-accent-text hover:text-accent-contrast min-h-[44px]"
-                        >
-                          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                            طلب الباقة
-                          </a>
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        <Suspense fallback={null}>
+                          <OfferInquiryButton
+                            offerId={offer.id}
+                            providerId={provider.id}
+                            providerName={provider.name}
+                            providerSlug={provider.slug}
+                            providerUserId={provider.userId}
+                            offers={offerOptions}
+                            defaultWeddingDate={weddingDate}
+                            minWeddingDate={cairoToday}
+                            viewer={leadViewer}
+                          />
+                        </Suspense>
+
+                        {whatsappUrl && (
+                          <Button
+                            asChild
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-text-muted hover:text-text min-h-[44px]"
+                          >
+                            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                              واتساب
+                            </a>
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
