@@ -57,6 +57,14 @@ enum ReviewStatus {
   REJECTED
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  BOOKED
+  DECLINED
+  SPAM
+}
+
 // ─── Better Auth Models ──────────────────────────────────────────────────────
 
 model User {
@@ -69,12 +77,13 @@ model User {
   image             String?
   role              Role      @default(VISITOR)
   mustChangePassword Boolean  @default(false)
-  isActive          Boolean   @default(true)
-  banned            Boolean?  @default(false)
-  banReason         String?
-  banExpires        DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  isActive            Boolean   @default(true)
+  banned              Boolean?  @default(false)
+  banReason           String?
+  banExpires          DateTime?
+  favoritesShareToken String?   @unique
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   // Better Auth relations
   sessions          Session[]
@@ -83,7 +92,9 @@ model User {
   // App relations
   provider             Provider?
   reviews              Review[]
+  reviewReports        ReviewReport[]
   favorites            Favorite[]
+  leads                Lead[]
   createdSubscriptions Subscription[] @relation("SubscriptionCreatedBy")
   auditLogs            AuditLog[]     @relation("AdminAuditLogs")
 }
@@ -159,6 +170,10 @@ model Provider {
   whatsapp      String?
   instagramUrl  String?
   facebookUrl   String?
+  mapsUrl       String?
+  highlights    String[]       @default([])
+  openingHours  Json?
+  faqs          Json?
   logoUrl       String?
   logoPublicId  String?
   coverUrl      String?
@@ -183,6 +198,7 @@ model Provider {
   subscriptions Subscription[]
   reviews       Review[]
   favorites     Favorite[]
+  leads         Lead[]
   auditLogs     AuditLog[]
   dailyStats    ProviderDailyStat[]
 
@@ -214,6 +230,7 @@ model Offer {
   updatedAt   DateTime @updatedAt
 
   provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  leads    Lead[]
 
   @@index([providerId])
 }
@@ -280,22 +297,66 @@ model Subscription {
 }
 
 model Review {
-  id              String       @id @default(cuid())
-  providerId      String
-  userId          String
-  rating          Int // 1-5, validated in app code with zod
-  comment         String?      @db.Text
-  status          ReviewStatus @default(PENDING)
-  providerReply   String?      @db.Text
-  providerRepliedAt DateTime?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id                  String       @id @default(cuid())
+  providerId          String
+  userId              String
+  rating              Int // 1-5, validated in app code with zod
+  comment             String?      @db.Text
+  status              ReviewStatus @default(PENDING)
+  moderationNote      String?      @db.Text
+  moderatedAt         DateTime?
+  moderatedById       String?
+  providerReply       String?      @db.Text
+  providerRepliedAt   DateTime?
+  providerReplyHidden Boolean      @default(false)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
-  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id])
+  provider Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [id])
+  reports  ReviewReport[]
 
   @@unique([providerId, userId])
   @@index([providerId, status])
+  @@index([status, createdAt])
+}
+
+model ReviewReport {
+  id           String    @id @default(cuid())
+  reviewId     String
+  reporterId   String
+  reason       String    @db.Text
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reporter User   @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, reporterId])
+  @@index([resolvedAt, createdAt])
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  providerId   String
+  userId       String
+  name         String
+  phone        String
+  weddingDate  DateTime?  @db.Date
+  offerId      String?
+  message      String?    @db.Text
+  status       LeadStatus @default(NEW)
+  providerNote String?    @db.Text
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer    Offer?   @relation(fields: [offerId], references: [id], onDelete: SetNull)
+
+  @@index([providerId, status, createdAt])
+  @@index([userId, createdAt])
 }
 
 model Favorite {

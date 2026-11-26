@@ -81,6 +81,23 @@ export function getSubscriptionState(
   return "EXPIRED";
 }
 
+/**
+ * Finds an existing non-cancelled subscription whose [startsAt, endsAt) window overlaps
+ * the candidate [candidateStart, candidateEnd) window.
+ */
+export function findOverlappingSubscription<
+  T extends Pick<SubscriptionItem, "status" | "startsAt" | "endsAt">,
+>(
+  subscriptions: T[],
+  candidateStart: Date,
+  candidateEnd: Date
+): T | undefined {
+  return subscriptions.find((s) => {
+    if (s.status === "CANCELLED") return false;
+    return candidateStart < s.endsAt && s.startsAt < candidateEnd;
+  });
+}
+
 export interface CreateSubscriptionParams {
   providerId: string;
   adminId: string;
@@ -165,11 +182,11 @@ export async function createSubscription(params: CreateSubscriptionParams) {
     }
 
     // 4. Overlap check against existing non-cancelled subscriptions
-    const overlapping = provider.subscriptions.find((s) => {
-      if (s.status === "CANCELLED") return false;
-      // Overlap condition: startsAt < s.endsAt AND s.startsAt < endsAt
-      return startsAt < s.endsAt && s.startsAt < endsAt;
-    });
+    const overlapping = findOverlappingSubscription(
+      provider.subscriptions,
+      startsAt,
+      endsAt
+    );
 
     if (overlapping) {
       const conflictStart = toCairoDateString(overlapping.startsAt);

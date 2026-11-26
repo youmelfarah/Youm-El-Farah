@@ -6,6 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "db:migrate": "prisma migrate dev",
     "db:apply": "node scripts/apply-sql.mjs",
     "db:seed": "tsx prisma/seed.ts",
@@ -64,6 +65,7 @@
     "postcss": "^8.5.32",
     "tailwindcss": "^4.3.4",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.4"
   }
 }
