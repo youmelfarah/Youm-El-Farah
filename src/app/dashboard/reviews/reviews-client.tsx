@@ -11,7 +11,7 @@ import { Rating } from "@/components/ui/rating";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui/field";
 import { EmptyState } from "@/components/ui/empty-state";
-import { REVIEW_MAX_REPLY_LENGTH } from "@/lib/review-aggregates";
+import { REVIEW_MAX_REPLY_LENGTH } from "@/lib/review-validation";
 import {
   deleteProviderReviewReplyAction,
   saveProviderReviewReplyAction,

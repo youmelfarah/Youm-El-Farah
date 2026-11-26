@@ -24,7 +24,7 @@ import {
 import {
   REVIEW_MAX_COMMENT_LENGTH,
   REVIEW_STATUS_LABELS_AR,
-} from "@/lib/review-aggregates";
+} from "@/lib/review-validation";
 import {
   deleteOwnReviewAction,
   submitReviewAction,

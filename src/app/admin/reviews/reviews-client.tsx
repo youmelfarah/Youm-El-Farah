@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { REVIEW_STATUS_LABELS_AR } from "@/lib/review-aggregates";
+import { REVIEW_STATUS_LABELS_AR } from "@/lib/review-validation";
 import {
   moderateReviewAction,
   resolveReviewReportAction,
