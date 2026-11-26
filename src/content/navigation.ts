@@ -16,6 +16,9 @@ export const navigationContent = {
       logout: "تسجيل الخروج",
       adminDashboard: "لوحة الإدارة",
       providerDashboard: "لوحة مقدم الخدمة",
+      myAccount: "حسابي",
+      favorites: "المفضلة",
+      myReviews: "تقييماتي",
     },
   },
   footer: {

@@ -10,6 +10,8 @@ import {
   SignOut,
   ShieldCheck,
   Storefront,
+  Heart,
+  Star,
 } from "@phosphor-icons/react";
 import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
@@ -199,6 +201,38 @@ export function PublicHeader({
                   {(user.role === "ADMIN" || user.role === "PROVIDER") && (
                     <DropdownMenuSeparator />
                   )}
+                  {user.role === "VISITOR" && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/account"
+                          className="flex items-center gap-2 cursor-pointer w-full min-h-[36px]"
+                        >
+                          <User className="h-4 w-4 text-accent-text" weight="light" />
+                          <span>{navigationContent.header.actions.myAccount}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/account/favorites"
+                          className="flex items-center gap-2 cursor-pointer w-full min-h-[36px]"
+                        >
+                          <Heart className="h-4 w-4 text-accent-text" weight="light" />
+                          <span>{navigationContent.header.actions.favorites}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/account/reviews"
+                          className="flex items-center gap-2 cursor-pointer w-full min-h-[36px]"
+                        >
+                          <Star className="h-4 w-4 text-accent-text" weight="light" />
+                          <span>{navigationContent.header.actions.myReviews}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem
                     danger
                     onClick={handleLogout}
@@ -303,6 +337,25 @@ export function PublicHeader({
                           {navigationContent.header.actions.providerDashboard}
                         </Link>
                       </Button>
+                    )}
+                    {user.role === "VISITOR" && (
+                      <>
+                        <Button asChild variant="secondary" className="w-full min-h-[44px]">
+                          <Link href="/account" onClick={() => setIsOpen(false)}>
+                            {navigationContent.header.actions.myAccount}
+                          </Link>
+                        </Button>
+                        <Button asChild variant="secondary" className="w-full min-h-[44px]">
+                          <Link href="/account/favorites" onClick={() => setIsOpen(false)}>
+                            {navigationContent.header.actions.favorites}
+                          </Link>
+                        </Button>
+                        <Button asChild variant="secondary" className="w-full min-h-[44px]">
+                          <Link href="/account/reviews" onClick={() => setIsOpen(false)}>
+                            {navigationContent.header.actions.myReviews}
+                          </Link>
+                        </Button>
+                      </>
                     )}
                     <Button
                       type="button"

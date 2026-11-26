@@ -19,11 +19,14 @@ import { formatArabicDateString } from "@/lib/calendar-dates";
 import { DISTRICT_LABELS } from "@/lib/districts";
 import { cn } from "@/lib/cn";
 import type { PublicProviderCardData } from "@/lib/marketplace-query";
+import { FavoriteButton } from "@/components/marketplace/favorite-button";
 
 export interface ProviderCardProps {
   provider: PublicProviderCardData;
   activeDate?: string | null;
   priority?: boolean;
+  initialFavorited?: boolean;
+  showFavoriteButton?: boolean;
 }
 
 interface CategoryFallbackStyle {
@@ -96,6 +99,8 @@ export function ProviderCard({
   provider,
   activeDate,
   priority = false,
+  initialFavorited,
+  showFavoriteButton = true,
 }: ProviderCardProps) {
   const [imgError, setImgError] = React.useState(false);
   const districtLabel = DISTRICT_LABELS[provider.district] || provider.district;
@@ -109,10 +114,22 @@ export function ProviderCard({
   const hasValidImage = Boolean(provider.coverUrl && !imgError);
 
   return (
-    <Link
-      href={`/providers/${provider.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-[#EFE5DA] bg-white shadow-sm hover:shadow-lg hover:border-[#E5C9C0] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B84A62]"
-    >
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#EFE5DA] bg-white shadow-sm hover:shadow-lg hover:border-[#E5C9C0] transition-all duration-300">
+      {showFavoriteButton && (
+        <React.Suspense fallback={null}>
+          <FavoriteButton
+            providerId={provider.id}
+            initialFavorited={initialFavorited}
+            variant="card"
+            className="absolute top-3 start-3 z-10"
+          />
+        </React.Suspense>
+      )}
+
+      <Link
+        href={`/providers/${provider.slug}`}
+        className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B84A62] rounded-2xl"
+      >
       {/* 4:3 Cover Image Frame with Hover Zoom */}
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-[#F8F4EE]">
         {hasValidImage ? (
@@ -164,34 +181,29 @@ export function ProviderCard({
         )}
 
         {/* Badges Over Cover */}
-        <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2 pointer-events-none">
-          {/* Availability badge at top-right (start in RTL) */}
-          <div>
-            {activeDate && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/90 text-white px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                <span>متاح يوم {formatArabicDateString(activeDate)}</span>
-              </span>
-            )}
-          </div>
-
-          {/* Frosted rating or new pill badge at top-left (end in RTL) */}
-          <div>
-            {provider.reviewCount > 0 ? (
-              <div
-                className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-[#2A1E1B] shadow-sm backdrop-blur-sm"
-                dir="ltr"
-              >
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-                <span>{provider.averageRating.toFixed(1)}</span>
-                <span className="text-stone-500 font-normal">({provider.reviewCount})</span>
-              </div>
-            ) : (
-              <span className="inline-flex items-center rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-[#B84A62] shadow-sm backdrop-blur-sm">
-                جديد
-              </span>
-            )}
-          </div>
+        <div className="absolute bottom-3 start-3 pointer-events-none">
+          {activeDate && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/90 text-white px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span>متاح يوم {formatArabicDateString(activeDate)}</span>
+            </span>
+          )}
+        </div>
+        <div className="absolute top-3 end-3 pointer-events-none">
+          {provider.reviewCount > 0 ? (
+            <div
+              className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-[#2A1E1B] shadow-sm backdrop-blur-sm"
+              dir="ltr"
+            >
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+              <span>{provider.averageRating.toFixed(1)}</span>
+              <span className="text-stone-500 font-normal">({provider.reviewCount})</span>
+            </div>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-[#B84A62] shadow-sm backdrop-blur-sm">
+              جديد
+            </span>
+          )}
         </div>
       </div>
 
@@ -234,6 +246,7 @@ export function ProviderCard({
         </div>
       </div>
     </Link>
+    </div>
   );
 }
 

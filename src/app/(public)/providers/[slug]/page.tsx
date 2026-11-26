@@ -37,6 +37,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Rating } from "@/components/ui/rating";
 import { ProviderCard } from "@/components/marketplace/provider-card";
+import { FavoriteButton } from "@/components/marketplace/favorite-button";
 import { ProviderGallery } from "@/components/marketplace/provider-gallery";
 import { ProviderAvailabilityCalendar } from "@/components/marketplace/provider-availability-calendar";
 import { ProviderContactActions } from "@/components/marketplace/provider-contact-actions";
@@ -233,7 +234,7 @@ export default async function ProviderProfilePage({
       ? [{ rating: "asc" as const }, { createdAt: "desc" as const }]
       : [{ createdAt: "desc" as const }];
 
-  const [reviewDistribution, approvedReviewCount, viewerDbState] =
+  const [reviewDistribution, approvedReviewCount, viewerDbState, favoriteRow] =
     await Promise.all([
       prisma.review.groupBy({
         by: ["rating"],
@@ -259,6 +260,17 @@ export default async function ProviderProfilePage({
               select: { id: true, rating: true, comment: true, status: true },
             }),
           ])
+        : Promise.resolve(null),
+      session?.user?.id
+        ? prisma.favorite.findUnique({
+            where: {
+              userId_providerId: {
+                userId: session.user.id,
+                providerId: provider.id,
+              },
+            },
+            select: { providerId: true },
+          })
         : Promise.resolve(null),
     ]);
 
@@ -572,20 +584,28 @@ export default async function ProviderProfilePage({
                 </h1>
 
                 {/* Rating Summary (ONLY when reviewCount > 0) */}
-                {provider.reviewCount > 0 ? (
-                  <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  {provider.reviewCount > 0 ? (
                     <Rating
                       value={provider.averageRating}
                       count={provider.reviewCount}
                       size="md"
                     />
-                  </div>
-                ) : (
-                  <div className="mt-3 flex items-center gap-2 text-xs text-white/60">
-                    <Sparkle className="h-4 w-4 text-accent-text" weight="light" />
-                    <span>مقدم خدمة معتمد في دليل يوم الفرح</span>
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs text-white/60">
+                      <Sparkle className="h-4 w-4 text-accent-text" weight="light" />
+                      <span>مقدم خدمة معتمد في دليل يوم الفرح</span>
+                    </div>
+                  )}
+
+                  <Suspense fallback={null}>
+                    <FavoriteButton
+                      providerId={provider.id}
+                      initialFavorited={Boolean(favoriteRow)}
+                      variant="hero"
+                    />
+                  </Suspense>
+                </div>
               </div>
             </div>
           </Container>
