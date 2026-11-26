@@ -11,6 +11,10 @@ import {
   Tag,
   CalendarCheck,
   Sparkle,
+  SealCheck,
+  MapTrifold,
+  CaretLeft,
+  Clock,
 } from "@phosphor-icons/react/dist/ssr";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth-helpers";
@@ -53,6 +57,17 @@ import { formatReviewerDisplayName } from "@/lib/display-name";
 import { toCairoDateString } from "@/lib/cairo-time";
 import { formatArabicDateString, getCairoTodayString } from "@/lib/calendar-dates";
 import { isPhoneVerificationRequired } from "@/lib/review-eligibility";
+import {
+  formatTime24ToArabic12,
+  parseOpeningHours,
+  toOpeningHoursSpecificationJsonLd,
+  WEEKDAY_KEYS,
+  WEEKDAY_LABELS_AR,
+} from "@/lib/opening-hours";
+import { parseFaqs, toFaqPageJsonLd } from "@/lib/faq-schema";
+import { CollapsibleBio } from "@/components/marketplace/collapsible-bio";
+import { ProviderShareActions } from "@/components/marketplace/provider-share-actions";
+import { ProviderFaqsAccordion } from "@/components/marketplace/provider-faqs-accordion";
 
 export const revalidate = 300;
 
@@ -79,6 +94,10 @@ async function getProviderForProfile(slug: string) {
       whatsapp: true,
       instagramUrl: true,
       facebookUrl: true,
+      mapsUrl: true,
+      highlights: true,
+      openingHours: true,
+      faqs: true,
       logoUrl: true,
       coverUrl: true,
       coverPublicId: true,
@@ -422,8 +441,13 @@ export default async function ProviderProfilePage({
   }
 
   const baseUrl = getBaseAppUrl();
+  const profileUrl = `${baseUrl}/providers/${provider.slug}`;
+  const openingHours = parseOpeningHours(provider.openingHours);
+  const openingHoursJsonLd = toOpeningHoursSpecificationJsonLd(openingHours);
+  const faqs = parseFaqs(provider.faqs);
+  const faqPageJsonLd = toFaqPageJsonLd(faqs);
 
-  // JSON-LD LocalBusiness & BreadcrumbList
+  // JSON-LD LocalBusiness, BreadcrumbList, and optional FAQPage
   const socialLinks: string[] = [];
   if (provider.instagramUrl) socialLinks.push(provider.instagramUrl);
   if (provider.facebookUrl) socialLinks.push(provider.facebookUrl);
@@ -458,7 +482,7 @@ export default async function ProviderProfilePage({
                   "@type": "ListItem",
                   position: 4,
                   name: provider.name,
-                  item: `${baseUrl}/providers/${provider.slug}`,
+                  item: profileUrl,
                 },
               ]
             : [
@@ -466,7 +490,7 @@ export default async function ProviderProfilePage({
                   "@type": "ListItem",
                   position: 3,
                   name: provider.name,
-                  item: `${baseUrl}/providers/${provider.slug}`,
+                  item: profileUrl,
                 },
               ]),
         ],
@@ -474,7 +498,7 @@ export default async function ProviderProfilePage({
       {
         "@type": "LocalBusiness",
         name: provider.name,
-        url: `${baseUrl}/providers/${provider.slug}`,
+        url: profileUrl,
         ...(provider.logoUrl || provider.coverUrl
           ? { image: provider.coverUrl || provider.logoUrl }
           : {}),
@@ -487,6 +511,10 @@ export default async function ProviderProfilePage({
         },
         areaServed: "Beni Suef",
         ...(provider.phone ? { telephone: provider.phone } : {}),
+        ...(provider.mapsUrl ? { hasMap: provider.mapsUrl } : {}),
+        ...(openingHoursJsonLd.length > 0
+          ? { openingHoursSpecification: openingHoursJsonLd }
+          : {}),
         ...(socialLinks.length > 0 ? { sameAs: socialLinks } : {}),
         ...(provider.reviewCount > 0
           ? {
@@ -498,6 +526,14 @@ export default async function ProviderProfilePage({
             }
           : {}),
       },
+      ...(faqPageJsonLd
+        ? [
+            {
+              "@type": "FAQPage",
+              mainEntity: faqPageJsonLd.mainEntity,
+            },
+          ]
+        : []),
     ],
   };
 
@@ -591,10 +627,18 @@ export default async function ProviderProfilePage({
                   </span>
                 </div>
 
-                {/* Name */}
-                <h1 className="font-display text-display font-bold text-white tracking-tight leading-tight">
-                  {provider.name}
-                </h1>
+                {/* Name & Verified Badge */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="font-display text-display font-bold text-white tracking-tight leading-tight">
+                    {provider.name}
+                  </h1>
+                  {visibility.isVisible && (
+                    <Badge variant="success" size="md" className="shrink-0">
+                      <SealCheck className="h-4 w-4" weight="fill" />
+                      <span>ملف موثّق</span>
+                    </Badge>
+                  )}
+                </div>
 
                 {/* Rating Summary (ONLY when reviewCount > 0) */}
                 <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -624,6 +668,35 @@ export default async function ProviderProfilePage({
           </Container>
         </div>
       </section>
+
+      {/* VISIBLE BREADCRUMBS */}
+      <nav
+        aria-label="مسار التنقل"
+        className="border-b border-border bg-surface py-3 text-xs text-text-muted"
+      >
+        <Container className="flex flex-wrap items-center gap-1.5">
+          <Link href="/" className="hover:text-text transition-colors">
+            الرئيسية
+          </Link>
+          <CaretLeft className="h-3 w-3 shrink-0" weight="bold" />
+          <Link href="/services" className="hover:text-text transition-colors">
+            الخدمات
+          </Link>
+          {primaryCategory && (
+            <>
+              <CaretLeft className="h-3 w-3 shrink-0" weight="bold" />
+              <Link
+                href={`/services/${primaryCategory.slug}`}
+                className="hover:text-text transition-colors"
+              >
+                {primaryCategory.nameAr}
+              </Link>
+            </>
+          )}
+          <CaretLeft className="h-3 w-3 shrink-0" weight="bold" />
+          <span className="font-semibold text-text">{provider.name}</span>
+        </Container>
+      </nav>
 
       {/* (2) CONTACT ACTIONS & VIEW TRACKING */}
       <section className="border-b border-border bg-surface-raised py-6">
@@ -660,8 +733,25 @@ export default async function ProviderProfilePage({
             />
           </Suspense>
 
-          {/* (8) Social Links as text links */}
-          <div className="flex items-center gap-4 text-xs">
+          {/* (8) Social Links, Maps & Share */}
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            {provider.mapsUrl && (
+              <Button
+                asChild
+                variant="secondary"
+                size="sm"
+                className="min-h-[40px] gap-1.5"
+              >
+                <a
+                  href={provider.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MapTrifold className="h-4 w-4 text-accent-text" weight="light" />
+                  <span>الاتجاهات على الخريطة</span>
+                </a>
+              </Button>
+            )}
             {provider.instagramUrl && (
               <a
                 href={provider.instagramUrl}
@@ -684,24 +774,35 @@ export default async function ProviderProfilePage({
                 <span>فيسبوك</span>
               </a>
             )}
+            <ProviderShareActions
+              providerName={provider.name}
+              profileUrl={profileUrl}
+            />
           </div>
         </Container>
       </section>
 
       {/* MAIN BODY SECTIONS */}
       <div className="py-12 sm:py-16 flex flex-col gap-16">
-        {/* (3) نبذة عن مقدم الخدمة */}
-        {provider.bio && (
+        {/* (3) نبذة عن مقدم الخدمة والمميزات */}
+        {(provider.bio || provider.highlights.length > 0) && (
           <Section spacing="sm">
             <Container>
-              <div className="max-w-3xl">
+              <div className="max-w-3xl space-y-6">
                 <SectionHeading
                   eyebrow="ABOUT PROVIDER"
                   title="نبذة عن مقدم الخدمة"
                 />
-                <div className="mt-4 text-body text-text whitespace-pre-line leading-relaxed">
-                  {provider.bio}
-                </div>
+                {provider.highlights.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {provider.highlights.map((item) => (
+                      <Badge key={item} variant="accent" size="md">
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {provider.bio && <CollapsibleBio bio={provider.bio} />}
               </div>
             </Container>
           </Section>
@@ -818,6 +919,63 @@ export default async function ProviderProfilePage({
             </div>
           </Container>
         </Section>
+
+        {/* (6.5) مواعيد العمل */}
+        {openingHours && (
+          <Section spacing="sm" className="border-t border-border pt-12">
+            <Container>
+              <div className="max-w-xl">
+                <SectionHeading
+                  eyebrow="OPENING HOURS"
+                  title="مواعيد العمل"
+                  description="أوقات الاستقبال والتواصل الأسبوعية لمقدم الخدمة."
+                />
+                <div className="mt-6 divide-y divide-border rounded-[4px] border border-border bg-surface-raised">
+                  {WEEKDAY_KEYS.map((day) => {
+                    const slot = openingHours[day];
+                    return (
+                      <div
+                        key={day}
+                        className="flex items-center justify-between gap-4 px-5 py-3 text-sm"
+                      >
+                        <span className="flex items-center gap-2 font-medium text-text">
+                          <Clock className="h-4 w-4 text-accent-text" weight="light" />
+                          <span>{WEEKDAY_LABELS_AR[day]}</span>
+                        </span>
+                        {slot.isOpen && slot.open && slot.close ? (
+                          <span className="font-latin text-xs text-text">
+                            {formatTime24ToArabic12(slot.open)} –{" "}
+                            {formatTime24ToArabic12(slot.close)}
+                          </span>
+                        ) : (
+                          <Badge variant="neutral" size="sm">
+                            مغلق
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Container>
+          </Section>
+        )}
+
+        {/* (6.7) الأسئلة الشائعة */}
+        {faqs.length > 0 && (
+          <Section spacing="sm" className="border-t border-border pt-12">
+            <Container>
+              <div className="max-w-3xl space-y-6">
+                <SectionHeading
+                  eyebrow="FREQUENTLY ASKED QUESTIONS"
+                  title="الأسئلة الشائعة"
+                  description="أبرز الإجابات حول تفاصيل الخدمة والحجز."
+                />
+                <ProviderFaqsAccordion faqs={faqs} />
+              </div>
+            </Container>
+          </Section>
+        )}
 
         {/* (7) التقييمات */}
         <Suspense fallback={null}>

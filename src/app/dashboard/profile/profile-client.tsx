@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { UploadSimple, Trash, Check, WarningCircle } from "@phosphor-icons/react";
+import { UploadSimple, Trash, Check, WarningCircle, Plus, X } from "@phosphor-icons/react";
 import { getCloudinaryUploadSignatureAction } from "@/app/dashboard/cloudinary-actions";
 import {
   uploadFileDirectToCloudinary,
@@ -11,6 +11,20 @@ import {
 } from "@/lib/cloudinary-client";
 import { resolveCloudinaryDisplayUrl } from "@/lib/cloudinary-url";
 import { DISTRICT_OPTIONS } from "@/lib/districts";
+import {
+  createDefaultOpeningHours,
+  WEEKDAY_KEYS,
+  WEEKDAY_LABELS_AR,
+  type OpeningHours,
+} from "@/lib/opening-hours";
+import {
+  FAQ_MAX_ANSWER_LENGTH,
+  FAQ_MAX_ITEMS,
+  FAQ_MAX_QUESTION_LENGTH,
+  HIGHLIGHT_MAX_LENGTH,
+  HIGHLIGHTS_MAX_ITEMS,
+  type FaqItem,
+} from "@/lib/faq-schema";
 import {
   deleteProviderImageAction,
   saveProviderImageAction,
@@ -42,6 +56,10 @@ interface ProfileClientProps {
     whatsapp: string;
     instagramUrl: string;
     facebookUrl: string;
+    mapsUrl: string;
+    highlights: string[];
+    openingHours: OpeningHours | null;
+    faqs: FaqItem[];
     logoUrl: string | null;
     logoPublicId: string | null;
     coverUrl: string | null;
@@ -68,6 +86,16 @@ export function ProfileClient({
   const [whatsapp, setWhatsapp] = useState(provider.whatsapp);
   const [instagramUrl, setInstagramUrl] = useState(provider.instagramUrl);
   const [facebookUrl, setFacebookUrl] = useState(provider.facebookUrl);
+  const [mapsUrl, setMapsUrl] = useState(provider.mapsUrl);
+  const [highlights, setHighlights] = useState<string[]>(provider.highlights);
+  const [newHighlight, setNewHighlight] = useState("");
+  const [openingHoursEnabled, setOpeningHoursEnabled] = useState(
+    Boolean(provider.openingHours)
+  );
+  const [openingHours, setOpeningHours] = useState<OpeningHours>(
+    provider.openingHours ?? createDefaultOpeningHours()
+  );
+  const [faqs, setFaqs] = useState<FaqItem[]>(provider.faqs);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
     provider.categoryIds
   );
@@ -129,6 +157,10 @@ export function ProfileClient({
       whatsapp,
       instagramUrl,
       facebookUrl,
+      mapsUrl,
+      highlights,
+      openingHours: openingHoursEnabled ? openingHours : null,
+      faqs,
       categoryIds: selectedCategoryIds,
       primaryCategoryId,
     });
@@ -308,6 +340,271 @@ export function ProfileClient({
                   dir="ltr"
                 />
               </Field>
+            </div>
+
+            <Field
+              label="رابط الموقع على خرائط جوجل (اختياري)"
+              htmlFor="profile-maps-url"
+              helpText="يُقبل روابط google.com/maps أو maps.app.goo.gl أو goo.gl/maps"
+            >
+              <Input
+                id="profile-maps-url"
+                type="url"
+                disabled={isSuspended}
+                value={mapsUrl}
+                onChange={(e) => setMapsUrl(e.target.value)}
+                placeholder="https://maps.app.goo.gl/..."
+                dir="ltr"
+              />
+            </Field>
+
+            {/* Quick Highlights */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-text">
+                  المميزات السريعة (حتى {HIGHLIGHTS_MAX_ITEMS} نقاط)
+                </span>
+                <span className="font-latin text-xs text-text-muted">
+                  {highlights.length} / {HIGHLIGHTS_MAX_ITEMS}
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  disabled={isSuspended || highlights.length >= HIGHLIGHTS_MAX_ITEMS}
+                  maxLength={HIGHLIGHT_MAX_LENGTH}
+                  value={newHighlight}
+                  onChange={(e) => setNewHighlight(e.target.value)}
+                  placeholder="مثال: باركينج خاص، تكييف مركزي، فريق نسائي..."
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const clean = newHighlight.trim();
+                      if (clean.length >= 2 && !highlights.includes(clean) && highlights.length < HIGHLIGHTS_MAX_ITEMS) {
+                        setHighlights((prev) => [...prev, clean]);
+                        setNewHighlight("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={isSuspended || highlights.length >= HIGHLIGHTS_MAX_ITEMS || newHighlight.trim().length < 2}
+                  onClick={() => {
+                    const clean = newHighlight.trim();
+                    if (clean.length >= 2 && !highlights.includes(clean)) {
+                      setHighlights((prev) => [...prev, clean]);
+                      setNewHighlight("");
+                    }
+                  }}
+                  className="shrink-0 gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>إضافة</span>
+                </Button>
+              </div>
+
+              {highlights.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {highlights.map((item) => (
+                    <Badge key={item} variant="neutral" className="gap-1.5 py-1.5">
+                      <span>{item}</span>
+                      <button
+                        type="button"
+                        disabled={isSuspended}
+                        onClick={() =>
+                          setHighlights((prev) => prev.filter((x) => x !== item))
+                        }
+                        aria-label={`إزالة ${item}`}
+                        className="text-text-muted hover:text-danger cursor-pointer"
+                      >
+                        <X className="h-3 w-3" weight="bold" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Opening Hours */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="block text-xs font-semibold text-text">
+                    مواعيد العمل الأسبوعية (اختياري)
+                  </span>
+                  <span className="text-[11px] text-text-muted">
+                    فعّلي الجدول لعرض أوقات الاستقبال والعمل على صفحتك.
+                  </span>
+                </div>
+                <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-text">
+                  <input
+                    type="checkbox"
+                    disabled={isSuspended}
+                    checked={openingHoursEnabled}
+                    onChange={(e) => setOpeningHoursEnabled(e.target.checked)}
+                    className="h-4 w-4 rounded-[2px] border-border"
+                  />
+                  <span>عرض مواعيد العمل</span>
+                </label>
+              </div>
+
+              {openingHoursEnabled && (
+                <div className="space-y-2 rounded-[4px] border border-border bg-surface-muted/40 p-3">
+                  {WEEKDAY_KEYS.map((day) => {
+                    const entry = openingHours[day];
+                    return (
+                      <div
+                        key={day}
+                        className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2 last:border-b-0 last:pb-0 text-xs"
+                      >
+                        <label className="flex min-w-[110px] cursor-pointer items-center gap-2 font-medium text-text">
+                          <input
+                            type="checkbox"
+                            disabled={isSuspended}
+                            checked={entry.isOpen}
+                            onChange={(e) =>
+                              setOpeningHours((prev) => ({
+                                ...prev,
+                                [day]: e.target.checked
+                                  ? {
+                                      isOpen: true,
+                                      open: prev[day].open || "10:00",
+                                      close: prev[day].close || "22:00",
+                                    }
+                                  : { isOpen: false, open: null, close: null },
+                              }))
+                            }
+                            className="h-4 w-4 rounded-[2px] border-border"
+                          />
+                          <span>{WEEKDAY_LABELS_AR[day]}</span>
+                        </label>
+
+                        {entry.isOpen ? (
+                          <div className="flex items-center gap-2" dir="ltr">
+                            <input
+                              type="time"
+                              disabled={isSuspended}
+                              value={entry.open ?? "10:00"}
+                              onChange={(e) =>
+                                setOpeningHours((prev) => ({
+                                  ...prev,
+                                  [day]: {
+                                    ...prev[day],
+                                    isOpen: true,
+                                    open: e.target.value,
+                                  },
+                                }))
+                              }
+                              className="h-9 rounded-[4px] border border-border bg-surface-raised px-2 font-latin text-xs text-text"
+                            />
+                            <span className="text-text-muted">→</span>
+                            <input
+                              type="time"
+                              disabled={isSuspended}
+                              value={entry.close ?? "22:00"}
+                              onChange={(e) =>
+                                setOpeningHours((prev) => ({
+                                  ...prev,
+                                  [day]: {
+                                    ...prev[day],
+                                    isOpen: true,
+                                    close: e.target.value,
+                                  },
+                                }))
+                              }
+                              className="h-9 rounded-[4px] border border-border bg-surface-raised px-2 font-latin text-xs text-text"
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-text-muted">مغلق</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* FAQs Editor */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="block text-xs font-semibold text-text">
+                    الأسئلة الشائعة (حتى {FAQ_MAX_ITEMS} أسئلة)
+                  </span>
+                  <span className="text-[11px] text-text-muted">
+                    أجيبي عن أكثر استفسارات العرائس شيوعاً لتسريع قرار الحجز.
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={isSuspended || faqs.length >= FAQ_MAX_ITEMS}
+                  onClick={() =>
+                    setFaqs((prev) => [...prev, { question: "", answer: "" }])
+                  }
+                  className="gap-1 text-xs"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>إضافة سؤال</span>
+                </Button>
+              </div>
+
+              {faqs.map((faq, idx) => (
+                <div
+                  key={idx}
+                  className="space-y-2 rounded-[4px] border border-border bg-surface-muted/40 p-3.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-latin text-xs font-semibold text-text-muted">
+                      #{idx + 1}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={isSuspended}
+                      onClick={() =>
+                        setFaqs((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      className="h-8 px-2 text-xs text-danger hover:bg-danger-muted hover:text-danger"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <Input
+                    type="text"
+                    disabled={isSuspended}
+                    maxLength={FAQ_MAX_QUESTION_LENGTH}
+                    placeholder="السؤال (مثال: هل السعر يشمل البوفيه أم القاعة فقط؟)"
+                    value={faq.question}
+                    onChange={(e) =>
+                      setFaqs((prev) =>
+                        prev.map((item, i) =>
+                          i === idx ? { ...item, question: e.target.value } : item
+                        )
+                      )
+                    }
+                  />
+                  <Textarea
+                    disabled={isSuspended}
+                    maxLength={FAQ_MAX_ANSWER_LENGTH}
+                    placeholder="الإجابة الواضحة..."
+                    value={faq.answer}
+                    onChange={(e) =>
+                      setFaqs((prev) =>
+                        prev.map((item, i) =>
+                          i === idx ? { ...item, answer: e.target.value } : item
+                        )
+                      )
+                    }
+                  />
+                </div>
+              ))}
             </div>
 
             {/* Categories Selection */}

@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireOwnedProviderPage } from "@/lib/provider-dashboard";
+import { parseOpeningHours } from "@/lib/opening-hours";
+import { parseFaqs } from "@/lib/faq-schema";
 import { ProfileClient } from "./profile-client";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +42,10 @@ export default async function DashboardProfilePage() {
         whatsapp: provider.whatsapp ?? "",
         instagramUrl: provider.instagramUrl ?? "",
         facebookUrl: provider.facebookUrl ?? "",
+        mapsUrl: provider.mapsUrl ?? "",
+        highlights: provider.highlights ?? [],
+        openingHours: parseOpeningHours(provider.openingHours),
+        faqs: parseFaqs(provider.faqs),
         logoUrl: provider.logoUrl,
         logoPublicId: provider.logoPublicId,
         coverUrl: provider.coverUrl,

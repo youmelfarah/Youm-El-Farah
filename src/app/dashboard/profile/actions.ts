@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { revalidateProvider } from "@/lib/revalidate";
 import {
@@ -16,6 +17,9 @@ import {
   normalizePlainText,
   optionalEgyptianPhoneSchema,
 } from "@/lib/validation";
+import { mapsUrlSchema } from "@/lib/url-validators";
+import { openingHoursSchema, type OpeningHours } from "@/lib/opening-hours";
+import { faqsSchema, highlightsSchema, type FaqItem } from "@/lib/faq-schema";
 
 const updateProfileSchema = z
   .object({
@@ -51,6 +55,10 @@ const updateProfileSchema = z
     whatsapp: optionalEgyptianPhoneSchema,
     instagramUrl: instagramUrlSchema,
     facebookUrl: facebookUrlSchema,
+    mapsUrl: mapsUrlSchema,
+    highlights: highlightsSchema.optional().default([]),
+    openingHours: openingHoursSchema.nullable().optional().default(null),
+    faqs: faqsSchema.optional().default([]),
     categoryIds: z
       .array(z.string().trim().min(1))
       .transform((ids) => Array.from(new Set(ids)))
@@ -80,6 +88,10 @@ export async function updateProfileAction(input: {
   whatsapp?: string;
   instagramUrl?: string;
   facebookUrl?: string;
+  mapsUrl?: string;
+  highlights?: string[];
+  openingHours?: OpeningHours | null;
+  faqs?: FaqItem[];
   categoryIds: string[];
   primaryCategoryId: string;
 }): Promise<{ error?: string; ok?: boolean }> {
@@ -118,6 +130,15 @@ export async function updateProfileAction(input: {
           whatsapp: parsed.data.whatsapp,
           instagramUrl: parsed.data.instagramUrl,
           facebookUrl: parsed.data.facebookUrl,
+          mapsUrl: parsed.data.mapsUrl,
+          highlights: parsed.data.highlights,
+          openingHours: parsed.data.openingHours
+            ? (parsed.data.openingHours as Prisma.InputJsonValue)
+            : Prisma.DbNull,
+          faqs:
+            parsed.data.faqs.length > 0
+              ? (parsed.data.faqs as Prisma.InputJsonValue)
+              : Prisma.DbNull,
         },
       });
 

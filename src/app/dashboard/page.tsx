@@ -129,6 +129,26 @@ export default async function DashboardPage() {
       done: offerCount >= 1,
       href: "/dashboard/offers",
     },
+    {
+      label: "رابط الموقع على خرائط جوجل",
+      done: Boolean(provider.mapsUrl),
+      href: "/dashboard/profile",
+    },
+    {
+      label: "المميزات السريعة للخدمة",
+      done: Array.isArray(provider.highlights) && provider.highlights.length > 0,
+      href: "/dashboard/profile",
+    },
+    {
+      label: "مواعيد العمل الأسبوعية",
+      done: Boolean(provider.openingHours),
+      href: "/dashboard/profile",
+    },
+    {
+      label: "الأسئلة الشائعة للعرائس",
+      done: Array.isArray(provider.faqs) && provider.faqs.length > 0,
+      href: "/dashboard/profile",
+    },
   ];
 
   const completedCount = checklistItems.filter((item) => item.done).length;
