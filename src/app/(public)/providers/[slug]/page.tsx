@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -39,11 +40,23 @@ import { ProviderCard } from "@/components/marketplace/provider-card";
 import { ProviderGallery } from "@/components/marketplace/provider-gallery";
 import { ProviderAvailabilityCalendar } from "@/components/marketplace/provider-availability-calendar";
 import { ProviderContactActions } from "@/components/marketplace/provider-contact-actions";
+import {
+  ProviderReviewsSection,
+  type PublicReviewItem,
+} from "@/components/marketplace/provider-reviews-section";
+import { formatReviewerDisplayName } from "@/lib/display-name";
+import { toCairoDateString } from "@/lib/cairo-time";
+import { formatArabicDateString } from "@/lib/calendar-dates";
+import { isPhoneVerificationRequired } from "@/lib/review-eligibility";
 
 export const revalidate = 300;
 
 interface ProviderProfileProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{
+    reviewSort?: string;
+    reviewPage?: string;
+  }>;
 }
 
 async function getProviderForProfile(slug: string) {
@@ -174,19 +187,21 @@ export async function generateMetadata({
 
 export default async function ProviderProfilePage({
   params,
+  searchParams,
 }: ProviderProfileProps) {
-  const { slug } = await params;
+  const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const provider = await getProviderForProfile(slug);
   if (!provider) {
     notFound();
   }
+
+  const session = await getSession();
 
   // Visibility Check: Non-visible providers return 404 UNLESS user is owner or ADMIN
   const visibility = checkProviderVisibility(provider);
   let isPreviewMode = false;
 
   if (!visibility.isVisible) {
-    const session = await getSession();
     const isOwner = session?.user?.id === provider.userId;
     const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
 
@@ -201,6 +216,108 @@ export default async function ProviderProfilePage({
   const primaryCategory =
     provider.categories.find((c) => c.isPrimary)?.category ||
     provider.categories[0]?.category;
+
+  // Reviews query: distribution + paginated approved reviews + viewer state
+  const reviewSortRaw = sp?.reviewSort;
+  const reviewSort: "newest" | "highest" | "lowest" =
+    reviewSortRaw === "highest" || reviewSortRaw === "lowest"
+      ? reviewSortRaw
+      : "newest";
+  const parsedReviewPage = Number.parseInt(sp?.reviewPage ?? "1", 10);
+  const reviewPageSize = 10;
+
+  const reviewOrderBy =
+    reviewSort === "highest"
+      ? [{ rating: "desc" as const }, { createdAt: "desc" as const }]
+      : reviewSort === "lowest"
+      ? [{ rating: "asc" as const }, { createdAt: "desc" as const }]
+      : [{ createdAt: "desc" as const }];
+
+  const [reviewDistribution, approvedReviewCount, viewerDbState] =
+    await Promise.all([
+      prisma.review.groupBy({
+        by: ["rating"],
+        where: { providerId: provider.id, status: "APPROVED" },
+        _count: { _all: true },
+      }),
+      prisma.review.count({
+        where: { providerId: provider.id, status: "APPROVED" },
+      }),
+      session?.user?.id
+        ? Promise.all([
+            prisma.user.findUnique({
+              where: { id: session.user.id },
+              select: { id: true, role: true, phoneVerifiedAt: true },
+            }),
+            prisma.review.findUnique({
+              where: {
+                providerId_userId: {
+                  providerId: provider.id,
+                  userId: session.user.id,
+                },
+              },
+              select: { id: true, rating: true, comment: true, status: true },
+            }),
+          ])
+        : Promise.resolve(null),
+    ]);
+
+  const totalReviewPages = Math.max(
+    1,
+    Math.ceil(approvedReviewCount / reviewPageSize)
+  );
+  const currentReviewPage = Number.isFinite(parsedReviewPage)
+    ? Math.min(Math.max(1, parsedReviewPage), totalReviewPages)
+    : 1;
+
+  const approvedReviewsRaw = await prisma.review.findMany({
+    where: { providerId: provider.id, status: "APPROVED" },
+    orderBy: reviewOrderBy,
+    skip: (currentReviewPage - 1) * reviewPageSize,
+    take: reviewPageSize,
+    select: {
+      id: true,
+      userId: true,
+      rating: true,
+      comment: true,
+      createdAt: true,
+      providerReply: true,
+      providerRepliedAt: true,
+      providerReplyHidden: true,
+      user: { select: { name: true } },
+    },
+  });
+
+  const ratingCounts: Record<1 | 2 | 3 | 4 | 5, number> = {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+  };
+  for (const row of reviewDistribution) {
+    if (row.rating >= 1 && row.rating <= 5) {
+      ratingCounts[row.rating as 1 | 2 | 3 | 4 | 5] = row._count._all;
+    }
+  }
+
+  const publicReviews: PublicReviewItem[] = approvedReviewsRaw.map((r) => ({
+    id: r.id,
+    authorDisplayName: formatReviewerDisplayName(r.user.name),
+    rating: r.rating,
+    comment: r.comment,
+    createdAtLabel: formatArabicDateString(toCairoDateString(r.createdAt)),
+    providerReply:
+      r.providerReply && !r.providerReplyHidden ? r.providerReply : null,
+    providerRepliedAtLabel:
+      r.providerReply && !r.providerReplyHidden && r.providerRepliedAt
+        ? formatArabicDateString(toCairoDateString(r.providerRepliedAt))
+        : null,
+    isOwnReview: Boolean(session?.user?.id && r.userId === session.user.id),
+  }));
+
+  const viewerUser = viewerDbState?.[0] ?? null;
+  const viewerExistingReview = viewerDbState?.[1] ?? null;
 
   // WhatsApp & Phone urls
   const whatsappUrl = buildWhatsAppUrl({
@@ -632,7 +749,33 @@ export default async function ProviderProfilePage({
           </Container>
         </Section>
 
-        {/* (7) مقدمو خدمة مشابهون */}
+        {/* (7) التقييمات */}
+        <Suspense fallback={null}>
+          <ProviderReviewsSection
+            providerId={provider.id}
+            providerSlug={provider.slug}
+            providerName={provider.name}
+            providerUserId={provider.userId}
+            averageRating={provider.averageRating}
+            reviewCount={provider.reviewCount}
+            ratingCounts={ratingCounts}
+            reviews={publicReviews}
+            totalReviews={approvedReviewCount}
+            currentPage={currentReviewPage}
+            totalPages={totalReviewPages}
+            currentSort={reviewSort}
+            viewer={{
+              isSignedIn: Boolean(session?.user?.id),
+              userId: session?.user?.id ?? null,
+              userRole: viewerUser?.role ?? null,
+              phoneVerified: Boolean(viewerUser?.phoneVerifiedAt),
+              phoneVerificationRequired: isPhoneVerificationRequired(),
+              existingReview: viewerExistingReview,
+            }}
+          />
+        </Suspense>
+
+        {/* (8) مقدمو خدمة مشابهون */}
         {similarProvidersCards.length > 0 && (
           <Section spacing="sm" className="border-t border-border pt-12">
             <Container>

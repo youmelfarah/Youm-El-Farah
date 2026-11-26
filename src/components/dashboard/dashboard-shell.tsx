@@ -10,6 +10,7 @@ import {
   CalendarBlank,
   WarningCircle,
   XCircle,
+  Star,
 } from "@phosphor-icons/react";
 import { LogoutButton } from "@/components/logout-button";
 import { Logo } from "@/components/brand/Logo";
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/offers", label: "العروض والباقات", shortLabel: "العروض", icon: Tag },
   { href: "/dashboard/gallery", label: "معرض الصور", shortLabel: "المعرض", icon: ImageIcon },
   { href: "/dashboard/availability", label: "جدول المواعيد", shortLabel: "المواعيد", icon: CalendarBlank },
+  { href: "/dashboard/reviews", label: "التقييمات", shortLabel: "التقييمات", icon: Star },
 ] as const;
 
 export function DashboardShell({
@@ -133,7 +135,7 @@ export function DashboardShell({
           aria-label="التنقل السفلي للجوال"
           className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface-raised md:hidden"
         >
-          <div className="grid grid-cols-5">
+          <div className="grid grid-cols-6">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;

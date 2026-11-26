@@ -12,6 +12,7 @@ import {
   Tag,
   UserGear,
   ClockCounterClockwise,
+  Star,
 } from "@phosphor-icons/react";
 import { LogoutButton } from "@/components/logout-button";
 import { Logo } from "@/components/brand/Logo";
@@ -22,6 +23,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   exact?: boolean;
+  badgeKey?: "pendingReviews";
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -29,14 +31,17 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/providers", label: "مقدمو الخدمة", icon: Users },
   { href: "/admin/subscriptions", label: "الاشتراكات", icon: CreditCard },
   { href: "/admin/categories", label: "الفئات", icon: Tag },
+  { href: "/admin/reviews", label: "التقييمات", icon: Star, badgeKey: "pendingReviews" },
   { href: "/admin/provider-accounts", label: "حسابات المقدمين", icon: UserGear },
   { href: "/admin/audit-log", label: "سجل النشاط", icon: ClockCounterClockwise },
 ];
 
 export function AdminNav({
   user,
+  pendingReviewsCount = 0,
 }: {
   user: { name?: string | null; email?: string | null };
+  pendingReviewsCount?: number;
 }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -90,7 +95,12 @@ export function AdminNav({
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" weight={active ? "bold" : "light"} />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {item.badgeKey === "pendingReviews" && pendingReviewsCount > 0 && (
+                    <span className="rounded-[2px] bg-accent px-1.5 py-0.5 font-latin text-[11px] font-semibold text-accent-contrast">
+                      {pendingReviewsCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
