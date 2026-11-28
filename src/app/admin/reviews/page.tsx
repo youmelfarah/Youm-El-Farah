@@ -67,7 +67,9 @@ export default async function AdminReviewsPage(props: {
     prisma.review.count({ where: { status: "PENDING" } }),
     prisma.review.count({ where: { status: "APPROVED" } }),
     prisma.review.count({ where: { status: "REJECTED" } }),
-    prisma.reviewReport.count({ where: { resolvedAt: null } }),
+    prisma.reviewReport
+      ? prisma.reviewReport.count({ where: { resolvedAt: null } })
+      : Promise.resolve(0),
     prisma.provider.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
@@ -96,32 +98,36 @@ export default async function AdminReviewsPage(props: {
       };
     }
 
-    totalItems = await prisma.reviewReport.count({ where: reportWhere });
-    const rawReports = await prisma.reviewReport.findMany({
-      where: reportWhere,
-      orderBy: [{ resolvedAt: "asc" }, { createdAt: "desc" }],
-      skip: (currentPage - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: {
-        id: true,
-        reason: true,
-        createdAt: true,
-        resolvedAt: true,
-        reporter: { select: { name: true } },
-        review: {
+    totalItems = prisma.reviewReport
+      ? await prisma.reviewReport.count({ where: reportWhere })
+      : 0;
+    const rawReports = prisma.reviewReport
+      ? await prisma.reviewReport.findMany({
+          where: reportWhere,
+          orderBy: [{ resolvedAt: "asc" }, { createdAt: "desc" }],
+          skip: (currentPage - 1) * PAGE_SIZE,
+          take: PAGE_SIZE,
           select: {
             id: true,
-            rating: true,
-            comment: true,
-            status: true,
-            providerReply: true,
-            providerReplyHidden: true,
-            provider: { select: { name: true, slug: true } },
-            user: { select: { name: true } },
+            reason: true,
+            createdAt: true,
+            resolvedAt: true,
+            reporter: { select: { name: true } },
+            review: {
+              select: {
+                id: true,
+                rating: true,
+                comment: true,
+                status: true,
+                providerReply: true,
+                providerReplyHidden: true,
+                provider: { select: { name: true, slug: true } },
+                user: { select: { name: true } },
+              },
+            },
           },
-        },
-      },
-    });
+        })
+      : [];
 
     reports = rawReports.map((rep) => ({
       id: rep.id,

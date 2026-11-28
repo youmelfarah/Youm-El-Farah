@@ -26,7 +26,9 @@ export default async function AdminLayout({
 
   const [pendingReviews, openReports] = await Promise.all([
     prisma.review.count({ where: { status: "PENDING" } }),
-    prisma.reviewReport.count({ where: { resolvedAt: null } }),
+    prisma.reviewReport
+      ? prisma.reviewReport.count({ where: { resolvedAt: null } })
+      : Promise.resolve(0),
   ]);
 
   return (

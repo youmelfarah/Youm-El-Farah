@@ -58,9 +58,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" data-theme="light">
+    <html lang="ar" dir="rtl" data-theme="light" suppressHydrationWarning>
       <body
         className={`${elMessiri.variable} ${ibmPlexArabic.variable} ${cormorant.variable} min-h-screen bg-surface font-body text-text antialiased`}
+        suppressHydrationWarning
       >
         {children}
         <Toaster />

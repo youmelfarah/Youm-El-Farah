@@ -19,7 +19,15 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+// Invalidate stale in-memory client if new models (such as reviewReport) were generated
+const isStale = Boolean(
+  globalForPrisma.prisma && !("reviewReport" in globalForPrisma.prisma)
+);
+
+export const prisma =
+  !globalForPrisma.prisma || isStale
+    ? (globalForPrisma.prisma = createPrismaClient())
+    : globalForPrisma.prisma;
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
